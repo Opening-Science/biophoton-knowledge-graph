@@ -1,0 +1,109 @@
+{
+  "title": "Book Chapter Recommendation",
+  "subtitle": "Proposed chapter structure for the OSF biophoton / UPE book.",
+  "metadata": {
+    "Title": "Book Chapter Recommendation, Biophoton / UPE Book (RPT-2026-BPH-004)",
+    "Author": "Martin Etzrodt, Open Science Institute",
+    "Subject": "Recommended chapter structure for the OSF open-science book"
+  },
+  "info": [
+    {
+      "label": "Date",
+      "value": "20 July 2026"
+    },
+    {
+      "label": "Prepared by",
+      "value": "Martin Etzrodt, Director, Open Science Institute"
+    },
+    {
+      "label": "Distribution",
+      "value": "OSF Foundation Council"
+    },
+    {
+      "label": "Reference",
+      "value": "RPT-2026-BPH-004 · PRJ-BIOPHOTON"
+    },
+    {
+      "label": "Evidence base",
+      "value": "Field map: fieldmap.sqlite, OpenAlex snapshot July 2026."
+    }
+  ],
+  "auto_attachments_row": false,
+  "auto_attachments_section": false,
+  "sections": [
+    {
+      "label": "Purpose",
+      "blocks": [
+        "This note recommends a chapter structure for the OSF open-science book on the state of the biophoton and ultra-weak photon emission (UPE) field. The recommendation is derived from the field map: 18,355 works and 39,312 authors, grown by two-hop citation expansion from 245 resolved Cifra seed papers, then clustered into sub-fields and scored for openness. Every proposed chapter is anchored to a specific, reproducible part of the map, so the book can cite its own evidence base."
+      ]
+    },
+    {
+      "label": "The narrative spine",
+      "blocks": [
+        "Three findings from the map should anchor the whole book. Each is an empirical result, not an editorial claim.",
+        {
+          "type": "ul",
+          "items": [
+            "**The field has a real boundary, and the map draws it.** Sonoluminescence and acoustic cavitation physics cluster in their own communities, distinct from the biophoton core. The physics is an adjacency, not part of the field. The book should open by settling this scope question with the map rather than by assertion.",
+            "**The core is not monolithic.** Re-clustering the biophoton core resolves it into nine research strands, from human UPE measurement to delayed luminescence to coherence theory. The biofield, EEG, and consciousness literature separates out on its own.",
+            "**Openness is uneven, and measurable.** Field-wide open access sits near 38 percent. The openness overlay separates the open groups from the closed ones quantitatively, which is the book's differentiator as an open-science project."
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Recommended chapter structure",
+      "blocks": [
+        "The order moves from definition, to boundary, to structure, to people, to the open-science agenda. Each chapter lists its evidence anchor in the map.",
+        {
+          "type": "ul",
+          "items": [
+            "**Chapter 1. What ultra-weak photon emission is.** Definitions, mechanisms, and measurement. Anchor: core sub-strand 1 (human UPE and measurement methodology), Van Wijk, Cifra, Kobayashi. Lead work: \"Ultra-weak photon emission from biological samples: definition, mechanisms, properties\" (2014).",
+            "**Chapter 2. Where the field ends.** The boundary question, answered with the cluster map. Anchor: the coupling communities, with the sonoluminescence set in its own community distinct from the core. This chapter is the methodological keystone and should show the map directly.",
+            "**Chapter 3. The sub-fields.** A tour of the six intellectual sub-fields: biophoton core, ROS and redox, sonochemistry, bubble physics, sonoluminescence, nanobubbles. Anchor: the bibliographic-coupling communities with their sizes, geographies, and representative works.",
+            "**Chapter 4. Inside the core.** The nine research strands of the biophoton core: human UPE and methodology, cellular communication through light, delayed luminescence and photosynthesis, biophoton imaging, ROS and singlet-oxygen emission, neural and brain optical signalling, coherence theory, water and coherent domains, and retinal single-photon signalling. Anchor: the community-0 subdivision at Leiden resolution 3.0.",
+            "**Chapter 5. The reactive-oxygen connection.** The ROS, redox, and biochemiluminescence wing, and its overlap with the core. Anchor: coupling community 3, Pospisil, Voeikov, the Fe-EGTA-H2O2 chemistry.",
+            "**Chapter 6. The consciousness-adjacent fringe.** A critical treatment of the biofield, EEG, and paranormal-adjacent literature that cites into the field. Anchor: core subdivision sub-cluster 8 (Persinger, Dotta). Handle it as reputationally mixed and keep it editorially separate from the measurement core.",
+            "**Chapter 7. Who builds the field, and where.** The researcher landscape: central labs, geography, and collaboration structure. Anchor: the co-authorship network and the ranked researcher table. Key labs include the Czech Academy of Sciences (Cifra), Catania (Musumeci, Scordino), NTT and Tohoku (Kobayashi), Bern (Scholkmann), and Calgary (Salari).",
+            "**Chapter 8. Open versus closed.** The open-science analysis. Who publishes in the open, who encloses, and what that predicts for the field's future. Anchor: the per-author openness overlay and its components.",
+            "**Chapter 9. Gaps and an open-science agenda.** Whitespace in the field and a concrete agenda: shared measurement standards, open data and protocols, open hardware for photon counting. Anchor: the topic map and the low open-data signal rate."
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Featured researchers and labs",
+      "blocks": [
+        "Draw the book's interviews and case studies from the core strands, not from the overall citation ranking, which is dominated by prolific cavitation chemists from the adjacency. Suggested anchors by strand: Cifra and the Van Wijk group for measurement and human UPE, Scordino and Musumeci for delayed luminescence, Pospisil for the ROS wing, Salari and Simon for the neural-optics strand, and the Popp school for coherence theory. The ranked researcher table provides ORCID and institutional routing for outreach."
+      ]
+    },
+    {
+      "label": "Editorial guidance",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            "**Separate the consciousness wing.** It cites into the field and shares seeds, but the map places it apart. Treat it in its own chapter with a critical frame, not woven through the measurement chapters.",
+            "**Watch author disambiguation.** OpenAlex splits some authors. Van Wijk and Popp are merged in the dataset. Other splits are flagged for manual review. Verify author identity before attributing a body of work in print.",
+            "**Avoid citation-magnet artifacts.** A few very highly cited general-science papers are pulled in by coupling. Choose representative works from the seed-anchored set, which the map already isolates.",
+            "**Lead with mechanism and evidence.** The open-science framing is the book's spine, but each chapter should open with the science and let the openness analysis follow."
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Open questions for the authors",
+      "blocks": [
+        {
+          "type": "ul",
+          "items": [
+            "Should the ROS and redox wing be framed as part of the field or as a sister field? The map shows a distinct but adjacent community. The book can make this an explicit editorial decision.",
+            "How far should the neural and brain optical-signalling strand be developed? It is small but active and connects to quantum-biology debates.",
+            "What open infrastructure would most move the field? The low open-data signal suggests shared protocols and open photon-counting hardware as high-value targets."
+          ]
+        }
+      ]
+    }
+  ],
+  "attachments": []
+}

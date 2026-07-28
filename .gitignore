@@ -30,7 +30,6 @@ biophoton-fieldmap/outputs/release/
 biophoton-fieldmap/outputs/*.zip
 biophoton-fieldmap/outputs/biophoton-field-map-v*/
 biophoton-fieldmap/outputs/papers/
-biophoton-fieldmap/outputs/pdf/
 biophoton-fieldmap/outputs/index/
 
 # Superseded duplicate of Biophoton_Field_Map_Report.html
