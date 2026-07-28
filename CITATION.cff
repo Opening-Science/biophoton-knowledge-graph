@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: Biophoton / Ultra-Weak Photon Emission Field Map
+message: "If you use this resource, please cite it (citation requested, not required)."
+type: dataset
+version: "1.0.0"
+license: CC0-1.0
+doi: 10.5281/zenodo.21466492
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21466492
+    description: Concept DOI (cite all versions)
+  - type: doi
+    value: 10.5281/zenodo.21466493
+    description: "Version 1.0.0"
+abstract: >-
+  A structured, ranked, searchable map of the biophoton / ultra-weak photon
+  emission (UPE) research field, seeded from Michal Cifra's library and enriched
+  via OpenAlex, with a sub-field clustering and an open-science overlay.
+authors:
+  - family-names: Etzrodt
+    given-names: Martin
+    affiliation: Open Science Institute
+keywords:
+  - biophotons
+  - ultra-weak photon emission
+  - bibliometrics
+  - open science

@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Biophoton / UPE Field Map — Researcher Network</title>
+<style>
+  :root {
+    --bg: #0e1117;
+    --panel: #161b25;
+    --panel-2: #1d2430;
+    --line: #2a3242;
+    --ink: #e6edf7;
+    --ink-dim: #97a3b6;
+    --ink-faint: #6b7688;
+    --accent: #ffd24a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  #app { display: flex; height: 100%; }
+
+  /* ---------- side panel ---------- */
+  aside {
+    width: 300px; flex: none; background: var(--panel);
+    border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; overflow-y: auto;
+  }
+  aside > * { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  aside > *:last-child { border-bottom: 0; }
+  h1 { margin: 0 0 4px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .sub { margin: 0; font-size: 12px; color: var(--ink-dim); }
+  .lbl {
+    font-size: 10.5px; font-weight: 600; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--ink-faint); margin-bottom: 9px;
+  }
+  input[type=search] {
+    width: 100%; padding: 8px 10px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--panel-2);
+    color: var(--ink); font: inherit; font-size: 13px;
+  }
+  input[type=search]:focus { outline: none; border-color: var(--accent); }
+  input[type=search]::placeholder { color: var(--ink-faint); }
+  .hits { margin-top: 7px; font-size: 11.5px; color: var(--ink-faint); min-height: 17px; }
+
+  .legend-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 5px 6px; margin: 0 -6px; border-radius: 6px;
+    cursor: pointer; user-select: none;
+  }
+  .legend-row:hover { background: var(--panel-2); }
+  .legend-row.off { opacity: .38; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .legend-name { flex: 1; font-size: 12.5px; }
+  .legend-n { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+  .seg { display: flex; gap: 6px; }
+  .seg button {
+    flex: 1; padding: 6px 8px; font: inherit; font-size: 12px;
+    border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ink-dim); cursor: pointer;
+  }
+  .seg button.on { background: var(--accent); border-color: var(--accent); color: #17202e; font-weight: 600; }
+
+  .ramp { height: 9px; border-radius: 5px; margin: 2px 0 6px;
+          background: linear-gradient(90deg, #3b4354, #4f7fd0, #46c4a5, #ffd24a); }
+  .ramp-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-faint); }
+
+  #detail { min-height: 132px; }
+  #detail .empty { color: var(--ink-faint); font-size: 12.5px; }
+  #detail .nm { font-size: 14.5px; font-weight: 620; margin-bottom: 3px; }
+  #detail .inst { font-size: 12.5px; color: var(--ink-dim); margin-bottom: 10px; }
+  #detail dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12.5px; }
+  #detail dt { color: var(--ink-faint); }
+  #detail dd { margin: 0; overflow-wrap: anywhere; }
+
+  .note { font-size: 11.5px; color: var(--ink-faint); line-height: 1.55; }
+
+  /* ---------- canvas ---------- */
+  main { flex: 1; position: relative; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  canvas.drag { cursor: grabbing; }
+  #tip {
+    position: absolute; pointer-events: none; opacity: 0;
+    transform: translate(-50%, -100%); transition: opacity .1s;
+    background: #0b0f16f2; border: 1px solid var(--line);
+    border-radius: 7px; padding: 7px 10px; max-width: 260px;
+    font-size: 12.5px; box-shadow: 0 6px 22px #0009;
+  }
+  #tip .t-n { font-weight: 620; }
+  #tip .t-i { color: var(--ink-dim); font-size: 11.5px; }
+  #zoom { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 6px; }
+  #zoom button {
+    width: 30px; height: 30px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--line); background: #161b25e6; color: var(--ink);
+    font: inherit; font-size: 15px; line-height: 1;
+  }
+  #zoom button:hover { background: var(--panel-2); }
+  #zoom button.wide { width: auto; padding: 0 10px; font-size: 12px; }
+  #hint { position: absolute; left: 14px; bottom: 14px; font-size: 11.5px; color: var(--ink-faint); }
+  @media (max-width: 760px) {
+    #app { flex-direction: column; }
+    aside { width: 100%; max-height: 44%; border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <div>
+      <h1>Biophoton / UPE Field Map</h1>
+      <p class="sub">Researcher co-authorship network · <span id="meta"></span></p>
+    </div>
+
+    <div>
+      <div class="lbl">Search</div>
+      <input type="search" id="q" placeholder="Name or institution…" autocomplete="off" spellcheck="false">
+      <div class="hits" id="hits"></div>
+    </div>
+
+    <div>
+      <div class="lbl">Colour by</div>
+      <div class="seg">
+        <button id="mode-c" class="on">Sub-field</button>
+        <button id="mode-o">Openness</button>
+      </div>
+      <div id="ramp-wrap" style="display:none; margin-top:10px">
+        <div class="ramp"></div>
+        <div class="ramp-ends"><span>closed 0.0</span><span>1.0 open</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="lbl">Sub-fields <span style="text-transform:none;letter-spacing:0">(click to toggle)</span></div>
+      <div id="legend"></div>
+    </div>
+
+    <div id="detail">
+      <div class="lbl">Selected</div>
+      <div class="empty">Hover a node for a quick look, click to pin it here.</div>
+    </div>
+
+    <div>
+      <p class="note">
+        Nodes are the top <span id="n-nodes"></span> ranked researchers; size is
+        eigenvector centrality in the co-authorship graph, islands are Leiden
+        sub-fields. Edges are co-authorship links. Built from OpenAlex,
+        snapshot <span id="snap"></span>. No contact data is included in this view.
+      </p>
+    </div>
+  </aside>
+
+  <main>
+    <canvas id="cv"></canvas>
+    <div id="tip"></div>
+    <div id="hint">Scroll to zoom · drag to pan</div>
+    <div id="zoom">
+      <button id="zi" title="Zoom in">+</button>
+      <button id="zo" title="Zoom out">&minus;</button>
+      <button id="zr" class="wide" title="Reset view">Reset</button>
+    </div>
+  </main>
+</div>
+
+<script id="graph-data" type="application/json">{"nodes":[{"n":"Oualid Hamdaoui","x":825.8,"y":42.8,"c":1,"s":17.9,"o":0.31,"inst":"King Saud University","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":27.7},{"n":"Kyuichi Yasui","x":908.2,"y":150.3,"c":1,"s":16.8,"o":0.3,"inst":"National Institute of Advanced Industria","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":26.0},{"n":"Slimane Merouani","x":794.7,"y":98.8,"c":1,"s":18.0,"o":0.29,"inst":"Constantine 1 University","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":27.9},{"n":"Muthupandian Ashokkumar","x":878.2,"y":202.8,"c":1,"s":14.0,"o":0.34,"inst":"The University of Melbourne","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":21.7},{"n":"Michal Cifra","x":1.6,"y":-82.2,"c":0,"s":4.0,"o":0.5,"inst":"Czech Academy of Sciences, Institute of ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Eduard van Wijk","x":-33.2,"y":-19.0,"c":0,"s":4.0,"o":0.42,"inst":"Laguna Research","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Pavel Posp\u0131\u0301\u0161il","x":18.0,"y":-18.2,"c":0,"s":4.0,"o":0.52,"inst":"Palack\u00fd University Olomouc","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Toru Tuziuti","x":930.3,"y":202.2,"c":1,"s":15.1,"o":0.23,"inst":"National Institute of Advanced Industria","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":23.4},{"n":"Jack A. Tuszy\u0144ski","x":-20.3,"y":-155.7,"c":0,"s":4.0,"o":0.5,"inst":"Tufts University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ankush Prasad","x":23.9,"y":-36.7,"c":0,"s":4.0,"o":0.59,"inst":"Palack\u00fd University Olomouc","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Judy Lee","x":858.3,"y":248.3,"c":1,"s":11.9,"o":0.5,"inst":"University of Surrey","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":18.4},{"n":"Vahid Salari","x":7.7,"y":-154.4,"c":0,"s":4.0,"o":0.56,"inst":"University of Calgary","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Aissa Dehane","x":870.8,"y":82.1,"c":1,"s":16.1,"o":0.36,"inst":"Constantine 1 University","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":25.0},{"n":"Dariusz Nowak","x":359.5,"y":870.5,"c":3,"s":4.0,"o":0.68,"inst":"Cz\u0119stochowa University of Technology","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Micha\u0142 Nowak","x":259.6,"y":890.0,"c":3,"s":4.0,"o":0.75,"inst":"Poznan University of Medical Sciences","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Anna W\u0142odarczyk","x":311.4,"y":884.4,"c":3,"s":4.0,"o":0.75,"inst":"Medical University of Lodz","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Agata Sarniak","x":324.7,"y":834.1,"c":3,"s":4.0,"o":0.75,"inst":"Medical University of Lodz","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Meina Yang","x":-74.4,"y":11.6,"c":0,"s":4.0,"o":0.56,"inst":"Sichuan University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Detlef Lohse","x":-869.0,"y":114.8,"c":2,"s":5.9,"o":0.57,"inst":"Max Planck Institute for Dynamics and Se","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":9.1},{"n":"Agata Scordino","x":-99.2,"y":-82.3,"c":0,"s":4.0,"o":0.31,"inst":"University of Catania","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michaela Poplov\u00e1","x":18.6,"y":-58.1,"c":0,"s":4.0,"o":0.57,"inst":"Czech Academy of Sciences, Institute of ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jinxiang Han","x":-85.5,"y":-5.0,"c":0,"s":4.0,"o":0.58,"inst":"Shandong Provincial QianFoShan Hospital","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Rachel Pflieger","x":932.3,"y":279.1,"c":1,"s":6.6,"o":0.5,"inst":"Centre National de la Recherche Scientif","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":10.2},{"n":"Wies\u0142aw Tryniszewski","x":290.4,"y":929.9,"c":3,"s":4.0,"o":0.75,"inst":"Medical University of Lodz","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Paolo Di Mascio","x":211.0,"y":316.5,"c":0,"s":4.0,"o":0.49,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Helmut Sies","x":656.5,"y":534.7,"c":3,"s":4.0,"o":0.33,"inst":"Leibniz Institute of Environmental Medic","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Istv\u00e1n B\u00f3kkon","x":26.2,"y":-148.4,"c":0,"s":4.0,"o":0.4,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Roeland Van Wijk","x":-48.5,"y":-42.1,"c":0,"s":4.0,"o":0.27,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Blake T. Dotta","x":-289.7,"y":194.3,"c":0,"s":4.0,"o":0.47,"inst":"Laurentian University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Claus\u2010Dieter Ohl","x":-811.7,"y":72.1,"c":2,"s":4.6,"o":0.42,"inst":"University Hospital Magdeburg","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":7.1},{"n":"Jiapei Dai","x":2.3,"y":-173.0,"c":0,"s":4.0,"o":0.47,"inst":"Minzu University of China","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sergey I. Nikitenko","x":866.5,"y":320.9,"c":1,"s":6.2,"o":0.45,"inst":"\u00c9cole Nationale Sup\u00e9rieure de Chimie de ","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":9.6},{"n":"Ilya Volodyaev","x":0.5,"y":6.4,"c":0,"s":4.0,"o":0.29,"inst":"Moscow State University of Medicine and ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Etelvino Jos\u00e9 Henriques Bechara","x":232.0,"y":327.9,"c":0,"s":4.0,"o":0.45,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Francesco Musumeci","x":-112.8,"y":-96.2,"c":0,"s":4.0,"o":0.27,"inst":"Politecnico di Milano","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michaela Sedl\u00e1\u0159ov\u00e1","x":698.8,"y":836.4,"c":3,"s":4.0,"o":0.61,"inst":"","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Jingxiang Pang","x":-65.6,"y":-5.7,"c":0,"s":4.0,"o":0.49,"inst":"Shandong First Medical University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Christoph Simon","x":17.8,"y":-184.8,"c":0,"s":4.0,"o":0.64,"inst":"Allen Institute for Brain Science","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Piotr Nowak","x":262.8,"y":827.9,"c":3,"s":4.0,"o":0.55,"inst":"","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Madeleine Bussemaker","x":745.2,"y":325.9,"c":1,"s":6.7,"o":0.58,"inst":"University of Surrey","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":10.4},{"n":"Masaki Kobayashi","x":12.2,"y":24.7,"c":0,"s":4.0,"o":0.38,"inst":"Sysmex (Japan)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michael Levin","x":-26.0,"y":-213.5,"c":0,"s":4.0,"o":0.61,"inst":"Tufts University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Colin Seymour","x":-443.9,"y":-114.1,"c":0,"s":4.0,"o":0.46,"inst":"McMaster University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Martha Valiadi","x":-188.3,"y":-349.9,"c":0,"s":4.0,"o":0.75,"inst":"Foundation for Research and Technology H","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Carmel Mothersill","x":-458.3,"y":-188.9,"c":0,"s":4.0,"o":0.46,"inst":"McMaster University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Paolo Grigolini","x":230.2,"y":-41.5,"c":0,"s":4.0,"o":0.63,"inst":"University of North Texas","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Fernando E. Ortega\u2010Ojeda","x":-333.9,"y":224.3,"c":0,"s":4.0,"o":0.75,"inst":"Universidad de Alcal\u00e1","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Mohamed Farhat","x":-688.2,"y":82.0,"c":2,"s":4.0,"o":0.73,"inst":"Arts, Sciences and Technology University","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":6.2},{"n":"Petra Vahalov\u00e1","x":37.3,"y":-82.3,"c":0,"s":4.0,"o":0.45,"inst":"Czech Academy of Sciences, Institute of ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Felix Scholkmann","x":-13.1,"y":-101.1,"c":0,"s":4.0,"o":0.54,"inst":"University of Bern","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Carmen Garc\u00eda\u2010Ruiz","x":-264.3,"y":265.2,"c":0,"s":4.0,"o":0.65,"inst":"Universidad de Alcal\u00e1","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Stefan Schramm","x":325.7,"y":7.8,"c":0,"s":4.0,"o":0.42,"inst":"Hochschule f\u00fcr Technik und Wirtschaft Dr","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Qing Li","x":-388.2,"y":-15.3,"c":0,"s":4.0,"o":0.75,"inst":"Hong Kong Polytechnic University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Danyu Li","x":-412.6,"y":4.0,"c":0,"s":4.0,"o":0.75,"inst":"Chinese Academy of Medical Sciences & Pe","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Kaouther Kerboua","x":807.0,"y":-37.6,"c":1,"s":9.2,"o":0.31,"inst":"Higher National Veterinary School","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":14.3},{"n":"Jialei Fu","x":-92.8,"y":17.6,"c":0,"s":4.0,"o":0.48,"inst":"Nanjing University of Chinese Medicine","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Cristiano M. Gallep","x":19.4,"y":-89.9,"c":0,"s":4.0,"o":0.47,"inst":"Universidade Estadual de Campinas (UNICA","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Gemma Montalvo","x":-334.6,"y":305.0,"c":0,"s":4.0,"o":0.75,"inst":"Universidad de Alcal\u00e1","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Humio Inaba","x":46.9,"y":103.6,"c":0,"s":4.0,"o":0.15,"inst":"Tohoku Institute of Technology","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michel Havaux","x":68.0,"y":-9.3,"c":0,"s":4.0,"o":0.57,"inst":"Centre National de la Recherche Scientif","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bing Wang","x":-409.3,"y":-24.3,"c":0,"s":4.0,"o":0.65,"inst":"Northeastern University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sayuri Miyamoto","x":194.7,"y":348.4,"c":0,"s":4.0,"o":0.48,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Marek R\u00e1c","x":50.1,"y":-1.8,"c":0,"s":4.0,"o":0.66,"inst":"Palack\u00fd University Olomouc","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Kenneth S. Suslick","x":790.9,"y":204.5,"c":1,"s":5.1,"o":0.24,"inst":"University of Illinois Urbana-Champaign","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":7.9},{"n":"Yasuo Iida","x":981.8,"y":208.5,"c":1,"s":13.6,"o":0.18,"inst":"","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":21.1},{"n":"Enrique Cadenas","x":331.1,"y":364.8,"c":0,"s":4.0,"o":0.38,"inst":"University of Southern California","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Robert Mettin","x":-754.4,"y":29.5,"c":2,"s":5.3,"o":0.37,"inst":"University of G\u00f6ttingen","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":8.2},{"n":"Michael A. Persinger","x":-230.9,"y":146.0,"c":0,"s":4.0,"o":0.37,"inst":"Lincoln Memorial University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Anderson G. Oliveira","x":144.7,"y":306.9,"c":0,"s":4.0,"o":0.75,"inst":"Yeshiva University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yuichi Oba","x":178.1,"y":278.5,"c":0,"s":4.0,"o":0.75,"inst":"Chubu University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Eugenia Cifuentes-Pagano","x":534.3,"y":985.2,"c":3,"s":4.0,"o":0.75,"inst":"University of Pittsburgh","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Patrick J. Pagano","x":467.8,"y":1022.0,"c":3,"s":4.0,"o":0.75,"inst":"University of Pittsburgh","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Roman Radil","x":63.6,"y":-100.4,"c":0,"s":4.0,"o":0.75,"inst":"University of \u017dilina","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yufeng Zhang","x":-77.1,"y":48.9,"c":0,"s":4.0,"o":0.75,"inst":"East China University of Science and Tec","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hong Wu","x":-394.9,"y":27.8,"c":0,"s":4.0,"o":0.75,"inst":"Qinghai University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Xiaochun Zhang","x":-346.4,"y":28.6,"c":0,"s":4.0,"o":0.75,"inst":"Nanjing University of Chinese Medicine","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jing Wang","x":-332.1,"y":4.9,"c":0,"s":4.0,"o":0.75,"inst":"Beijing Technology and Business Universi","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yanpeng Zhao","x":-371.6,"y":37.1,"c":0,"s":4.0,"o":0.75,"inst":"Zhengzhou University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Peng Zheng","x":-354.7,"y":-37.8,"c":0,"s":4.0,"o":0.75,"inst":"South China Agricultural University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Aisha J. Syed","x":-425.8,"y":123.8,"c":0,"s":4.0,"o":0.75,"inst":"University of Dundee","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Qing Tang","x":-363.2,"y":2.7,"c":0,"s":4.0,"o":0.75,"inst":"Somerville Hospital","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Isabelle Navizet","x":297.3,"y":45.7,"c":0,"s":4.0,"o":0.55,"inst":"Centre National de la Recherche Scientif","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Panc\u011b Naumov","x":309.5,"y":60.8,"c":0,"s":4.0,"o":0.55,"inst":"New York University Abu Dhabi","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Xiaoju Zou","x":206.3,"y":55.5,"c":0,"s":4.0,"o":0.75,"inst":"Yunnan University of Traditional Chinese","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Takanori Ishida","x":68.4,"y":47.2,"c":0,"s":4.0,"o":0.75,"inst":"Toho University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Takuya Moriya","x":36.9,"y":70.7,"c":0,"s":4.0,"o":0.75,"inst":"Kawasaki Medical School","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Satoshi Suzuki","x":49.2,"y":54.2,"c":0,"s":4.0,"o":0.75,"inst":"Fukuoka Hospital","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"M. Takayama","x":67.3,"y":66.6,"c":0,"s":4.0,"o":0.75,"inst":"University of Tsukuba","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Kohji Ohnuki","x":53.6,"y":80.4,"c":0,"s":4.0,"o":0.75,"inst":"Tohoku University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Tahereh Esmaeilpour","x":36.4,"y":-179.2,"c":0,"s":4.0,"o":0.68,"inst":"Shiraz University of Medical Sciences","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Travis J. A. Craddock","x":-86.6,"y":-189.9,"c":0,"s":4.0,"o":0.55,"inst":"University of Waterloo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"E. L. Bastos","x":180.8,"y":317.2,"c":0,"s":4.0,"o":0.42,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Min He","x":-24.1,"y":-1.9,"c":0,"s":4.0,"o":0.54,"inst":"Shenzhen Chronic Disease Prevention Cent","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Daniel Oblak","x":34.0,"y":-198.6,"c":0,"s":4.0,"o":0.57,"inst":"University of Calgary","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Zhongwen Zhang","x":-92.5,"y":37.0,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"James C. Anderson","x":-391.4,"y":191.6,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Miao Tian","x":-336.0,"y":-21.1,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Fernanda M. Prado","x":214.3,"y":335.9,"c":0,"s":4.0,"o":0.59,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Barry Halliwell","x":555.9,"y":568.7,"c":3,"s":4.0,"o":0.29,"inst":"National University of Singapore","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"B Chance","x":350.9,"y":374.8,"c":0,"s":4.0,"o":0.57,"inst":"Universit\u00e9 Officielle de Bukavu","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michael R. Hamblin","x":190.2,"y":84.8,"c":0,"s":4.0,"o":0.66,"inst":"University of Johannesburg","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"E. V. Naumova","x":-8.6,"y":67.1,"c":0,"s":4.0,"o":0.22,"inst":"Tufts University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Giuseppe Vitiello","x":-100.9,"y":-143.4,"c":0,"s":4.0,"o":0.51,"inst":"University of Salerno","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Mengmeng Sun","x":-52.6,"y":-20.0,"c":0,"s":4.0,"o":0.49,"inst":"Kunming University of Science and Techno","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Rosaria Grasso","x":-123.2,"y":-120.4,"c":0,"s":4.0,"o":0.39,"inst":"University of Catania","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"J. van der Greef","x":-29.5,"y":-38.1,"c":0,"s":4.0,"o":0.42,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Franz Grieser","x":901.1,"y":248.5,"c":1,"s":11.2,"o":0.21,"inst":"Fraunhofer Institute for Telecommunicati","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":17.4},{"n":"Rafael Rad\u00ed","x":205.9,"y":806.7,"c":3,"s":4.0,"o":0.39,"inst":"Universidad de la Rep\u00fablica","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Karl\u2010Heinz Krause","x":419.1,"y":581.8,"c":3,"s":4.0,"o":0.66,"inst":"Foundation for laboratory medicine","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Krzysztof Sasak","x":355.5,"y":935.8,"c":3,"s":4.0,"o":0.75,"inst":"Medical University of Lodz","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Philip Kurian","x":-69.3,"y":-198.7,"c":0,"s":4.0,"o":0.62,"inst":"Howard University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Deepak Rathi","x":671.2,"y":767.4,"c":3,"s":4.0,"o":0.75,"inst":"Palack\u00fd University Olomouc","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"J\u00e9r\u00f4me Mallefet","x":182.1,"y":-227.5,"c":0,"s":4.0,"o":0.75,"inst":"UCLouvain","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Laurent Duchatelet","x":258.1,"y":-230.5,"c":0,"s":4.0,"o":0.75,"inst":"UCLouvain","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"J\u00e9r\u00f4me Delroisse","x":255.1,"y":-306.5,"c":0,"s":4.0,"o":0.75,"inst":"University of Mons","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Patrick Flammang","x":179.1,"y":-303.5,"c":0,"s":4.0,"o":0.75,"inst":"University of Mons","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hua Fan","x":-70.5,"y":30.6,"c":0,"s":4.0,"o":0.45,"inst":"First Affiliated Hospital of Henan Unive","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michael I. Latz","x":-165.4,"y":-386.4,"c":0,"s":4.0,"o":0.49,"inst":"Scripps Institution of Oceanography","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Abdulaziz Alghyamah","x":795.4,"y":0.7,"c":1,"s":9.4,"o":0.62,"inst":"King Saud University","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":14.6},{"n":"Teruyuki Kozuka","x":953.1,"y":247.7,"c":1,"s":13.2,"o":0.23,"inst":"Aichi Institute of Technology","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":20.5},{"n":"F. A. Popp","x":-101.2,"y":-48.6,"c":0,"s":4.0,"o":0.13,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"S. Tudisco","x":-131.1,"y":-102.4,"c":0,"s":4.0,"o":0.3,"inst":"Istituto Nazionale di Fisica Nucleare, L","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Seth Putterman","x":-110.4,"y":673.6,"c":4,"s":4.2,"o":0.21,"inst":"UCLA Health","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.5},{"n":"Christian P\u00e9trier","x":735.5,"y":129.1,"c":1,"s":7.9,"o":0.35,"inst":"Universit\u00e9 Grenoble Alpes","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":12.2},{"n":"Hugo J. Niggli","x":-148.4,"y":-93.4,"c":0,"s":4.0,"o":0.24,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Giuseppe Cilento","x":279.4,"y":345.1,"c":0,"s":4.0,"o":0.21,"inst":"Hospital Universit\u00e1rio da Universidade d","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Alistair V.W. Nunn","x":114.0,"y":-490.1,"c":0,"s":4.0,"o":0.75,"inst":"University of Westminster","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Xiaobing Luo","x":-276.6,"y":697.0,"c":4,"s":4.0,"o":0.45,"inst":"Zhejiang Sci-Tech University","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Hua Wen","x":-221.4,"y":742.0,"c":4,"s":4.0,"o":0.45,"inst":"University of Science and Technology of ","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Wen Xu","x":-154.7,"y":716.7,"c":4,"s":4.0,"o":0.45,"inst":"Hong Kong University of Science and Tech","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Man Luo","x":-198.6,"y":601.2,"c":4,"s":4.0,"o":0.45,"inst":"Sun Yat-sen University","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Xingjia Cheng","x":-265.3,"y":626.6,"c":4,"s":4.0,"o":0.45,"inst":"University of Science and Technology of ","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Kate\u0159ina \u010cervinkov\u00e1","x":-0.2,"y":-62.9,"c":0,"s":4.0,"o":0.53,"inst":"Czech Academy of Sciences, Institute of ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Steven H. D. Haddock","x":413.4,"y":-169.4,"c":0,"s":4.0,"o":0.75,"inst":"Monterey Bay Aquarium Research Institute","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Nathan S. Babcock","x":-87.8,"y":-251.8,"c":0,"s":4.0,"o":0.75,"inst":"Howard University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"T. I. Quickenden","x":45.5,"y":192.4,"c":0,"s":4.0,"o":0.16,"inst":"The University of Western Australia","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Michael J. Davies","x":679.9,"y":607.1,"c":3,"s":4.0,"o":0.45,"inst":"Statens Serum Institut","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Jimmy D. Bell","x":41.4,"y":-467.2,"c":0,"s":4.0,"o":0.73,"inst":"University of Westminster","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hadi Zadeh\u2010Haghighi","x":55.7,"y":-180.2,"c":0,"s":4.0,"o":0.7,"inst":"University of Waterloo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Janusz S\u0142awi\u0144ski","x":71.6,"y":154.5,"c":0,"s":4.0,"o":0.15,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sascha Hilgenfeldt","x":-121.4,"y":718.9,"c":4,"s":4.8,"o":0.55,"inst":"University of Illinois Urbana-Champaign","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":7.4},{"n":"Timothy D. Cowan","x":926.8,"y":335.3,"c":1,"s":4.9,"o":0.75,"inst":"The University of Melbourne","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":7.6},{"n":"Sue Goo Rhee","x":563.9,"y":676.0,"c":3,"s":4.0,"o":0.75,"inst":"National Institutes of Health","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Paul J. Thornalley","x":613.5,"y":618.4,"c":3,"s":4.0,"o":0.75,"inst":"University Hospital Coventry","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Arne Holmgren","x":506.2,"y":626.3,"c":3,"s":4.0,"o":0.75,"inst":"Karolinska Institutet","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Chao Lu","x":419.0,"y":984.1,"c":3,"s":4.0,"o":0.75,"inst":"Chinese Academy of Sciences","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Chun\u2010Hua Huang","x":12.7,"y":199.5,"c":0,"s":4.0,"o":0.75,"inst":"Chinese Academy of Sciences","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ilia V. Yampolsky","x":132.0,"y":321.6,"c":0,"s":4.0,"o":0.75,"inst":"nLIGHT (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Elena B. Guglya","x":158.9,"y":275.9,"c":0,"s":4.0,"o":0.75,"inst":"Institute of Bioorganic Chemistry","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Rodrigo P. Carvalho","x":172.0,"y":334.5,"c":0,"s":4.0,"o":0.75,"inst":"Uppsala University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Aleksandra S. Tsarkova","x":187.5,"y":241.1,"c":0,"s":4.0,"o":0.75,"inst":"Pirogov Russian National Research Medica","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Alexander S. Arseniev","x":179.4,"y":297.9,"c":0,"s":4.0,"o":0.75,"inst":"Institute of Bioorganic Chemistry","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Josef I. Gitelson","x":206.7,"y":251.5,"c":0,"s":4.0,"o":0.75,"inst":"Krasnoyarsk Scientific Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yoshiki Suzuki","x":143.6,"y":263.9,"c":0,"s":4.0,"o":0.75,"inst":"National Institute of Japanese Literatur","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Natalja S. Rodionova","x":160.1,"y":295.2,"c":0,"s":4.0,"o":0.75,"inst":"Krasnoyarsk Scientific Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ernani Pinto","x":231.0,"y":289.5,"c":0,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hans E. Waldenmaier","x":127.2,"y":298.4,"c":0,"s":4.0,"o":0.75,"inst":"Johnson & Johnson (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Zinaida M. Kaskova","x":197.9,"y":268.8,"c":0,"s":4.0,"o":0.75,"inst":"Pirogov Russian National Research Medica","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"\u041d\u0430\u0434\u0435\u0436\u0434\u0430 \u0421. \u0411\u0430\u043b\u0435\u0435\u0432\u0430","x":149.3,"y":331.8,"c":0,"s":4.0,"o":0.75,"inst":"Pirogov Russian National Research Medica","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Alexey A. Kotlobay","x":180.8,"y":259.3,"c":0,"s":4.0,"o":0.75,"inst":"Institute of Bioorganic Chemistry","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Tatiana Araujo Pereira","x":196.2,"y":329.1,"c":0,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Konstantin V. Purtov","x":142.7,"y":286.7,"c":0,"s":4.0,"o":0.75,"inst":"Institute of Biophysics","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Valentin N. Petushkov","x":213.2,"y":297.2,"c":0,"s":4.0,"o":0.75,"inst":"Krasnoyarsk Scientific Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"\u041a\u043e\u043d\u0441\u0442\u0430\u043d\u0442\u0438\u043d \u0421. \u041c\u0438\u043d\u0435\u0435\u0432","x":161.4,"y":316.7,"c":0,"s":4.0,"o":0.75,"inst":"Goethe University Frankfurt","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Shusei Kanie","x":161.6,"y":256.7,"c":0,"s":4.0,"o":0.75,"inst":"National Institute of Advanced Industria","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"\u041c\u0438\u0445\u0430\u0438\u043b \u0421. \u0411\u0430\u0440\u0430\u043d\u043e\u0432","x":215.2,"y":277.9,"c":0,"s":4.0,"o":0.75,"inst":"Pirogov Russian National Research Medica","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Christopher A. Loffredo","x":428.9,"y":696.1,"c":3,"s":4.0,"o":0.75,"inst":"Georgetown University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Thomas P. Cosgrove","x":232.8,"y":735.5,"c":3,"s":4.0,"o":0.75,"inst":"University of Alabama at Birmingham","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"H. Klinger","x":417.7,"y":825.2,"c":3,"s":4.0,"o":0.75,"inst":"University of Salzburg","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Gino Heeren","x":544.5,"y":722.9,"c":3,"s":4.0,"o":0.75,"inst":"University of Salzburg","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Klaus Stolze","x":508.8,"y":879.6,"c":3,"s":4.0,"o":0.75,"inst":"University of Veterinary Medicine Vienna","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Old\u0159\u00edch Benada","x":427.2,"y":776.1,"c":3,"s":4.0,"o":0.75,"inst":"Jan Evangelista Purkyn\u011b University in \u00das","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Thomas K. Felder","x":579.5,"y":823.9,"c":3,"s":4.0,"o":0.75,"inst":"Paracelsus Medical University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Tom\u00e1\u0161 Grou\u0161l","x":574.4,"y":767.1,"c":3,"s":4.0,"o":0.75,"inst":"Czech Academy of Sciences","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Campbell W. Gourlay","x":458.8,"y":856.8,"c":3,"s":4.0,"o":0.75,"inst":"Kent State University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Bettina Jansko","x":530.7,"y":834.6,"c":3,"s":4.0,"o":0.75,"inst":"University of Salzburg","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Birgit Simon\u2010Nobbe","x":492.3,"y":709.5,"c":3,"s":4.0,"o":0.75,"inst":"University of Salzburg","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"William C. Burhans","x":497.0,"y":780.1,"c":3,"s":4.0,"o":0.75,"inst":"Roswell Park Comprehensive Cancer Center","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Michael Schieber","x":482.0,"y":675.0,"c":3,"s":4.0,"o":0.75,"inst":"Northwestern Medicine Lake Forest Hospit","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Stefania Schiavone","x":417.9,"y":623.8,"c":3,"s":4.0,"o":0.75,"inst":"University of Foggia","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Francis J. Miller","x":450.3,"y":610.0,"c":3,"s":4.0,"o":0.75,"inst":"Vanderbilt University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Karen Bedard","x":400.9,"y":539.2,"c":3,"s":4.0,"o":0.75,"inst":"Dalhousie University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Ulla G. Knaus","x":610.3,"y":980.8,"c":3,"s":4.0,"o":0.75,"inst":"University College Dublin","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Aaron Barchowsky","x":521.7,"y":1060.1,"c":3,"s":4.0,"o":0.75,"inst":"University of Pittsburgh","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Eric E. Kelley","x":464.1,"y":956.1,"c":3,"s":4.0,"o":0.75,"inst":"West Virginia University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Nicholas K.H. Khoo","x":513.3,"y":912.1,"c":3,"s":4.0,"o":0.75,"inst":"Virginia Department of Health","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Imad Al Ghouleh","x":578.3,"y":923.1,"c":3,"s":4.0,"o":0.75,"inst":"Rhode Island Department of Health","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Phillip Michael Bauer","x":585.1,"y":1041.8,"c":3,"s":4.0,"o":0.75,"inst":"University of Pittsburgh","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Roland Lindh","x":318.1,"y":25.7,"c":0,"s":4.0,"o":0.75,"inst":"Uppsala University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Daniel Roca\u2010Sanju\u00e1n","x":343.6,"y":47.5,"c":0,"s":4.0,"o":0.75,"inst":"Universitat de Val\u00e8ncia","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Morgane Vacher","x":298.7,"y":26.3,"c":0,"s":4.0,"o":0.75,"inst":"Centre National de la Recherche Scientif","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bowen Ding","x":322.1,"y":44.7,"c":0,"s":4.0,"o":0.75,"inst":"China University of Petroleum, Beijing","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ignacio Fdez. Galv\u00e1n","x":330.0,"y":62.4,"c":0,"s":4.0,"o":0.75,"inst":"Uppsala University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Romain Berraud\u2010Pache","x":340.5,"y":28.3,"c":0,"s":4.0,"o":0.75,"inst":"Centre National de la Recherche Scientif","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Andrea Trost","x":573.9,"y":702.4,"c":3,"s":4.0,"o":0.75,"inst":"Paracelsus Medical University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Rudolf Reiter","x":345.0,"y":393.3,"c":0,"s":4.0,"o":0.75,"inst":"Universit\u00e4t Ulm","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Lucas Liaudet","x":296.0,"y":630.5,"c":3,"s":4.0,"o":0.75,"inst":"University Hospital of Lausanne","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"P\u00e1l Pacher","x":306.9,"y":555.2,"c":3,"s":4.0,"o":0.75,"inst":"National Institute on Alcohol Abuse and ","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Alireza Mashaghi","x":-35.8,"y":-58.8,"c":0,"s":4.0,"o":0.75,"inst":"Leiden University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Juana M. Pasquini","x":665.7,"y":1024.6,"c":3,"s":4.0,"o":0.75,"inst":"Consejo Nacional de Investigaciones Cien","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Ana M. Adamo","x":711.2,"y":963.6,"c":3,"s":4.0,"o":0.75,"inst":"Instituto de Qu\u00edmica y Fisicoqu\u00edmica Bio","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Renata Szyma\u0144ska","x":740.8,"y":778.1,"c":3,"s":4.0,"o":0.75,"inst":"Jagiellonian University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Michal K\u0159upka","x":676.3,"y":881.1,"c":3,"s":4.0,"o":0.75,"inst":"Palack\u00fd University Olomouc","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Zuzana Matu\u0161kov\u00e1","x":713.8,"y":909.7,"c":3,"s":4.0,"o":0.75,"inst":"University Hospital Olomouc","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Milan Ra\u0161ka","x":720.7,"y":882.2,"c":3,"s":4.0,"o":0.75,"inst":"University of Alabama at Birmingham","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Svatopluk Binder","x":681.2,"y":908.9,"c":3,"s":4.0,"o":0.75,"inst":"Palack\u00fd University Olomouc","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Yoshiaki Tsuji","x":638.3,"y":715.1,"c":3,"s":4.0,"o":0.75,"inst":"North Carolina State University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Moshe Giladi","x":-206.8,"y":339.4,"c":0,"s":4.0,"o":0.75,"inst":"Novocure (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Richard P. Haugland","x":-239.5,"y":218.1,"c":0,"s":4.0,"o":0.75,"inst":"Eugene Research Institute","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Alexandra Blatt","x":-126.5,"y":347.4,"c":0,"s":4.0,"o":0.75,"inst":"Rambam Health Care Campus","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Carl Oros","x":-290.1,"y":-351.9,"c":0,"s":4.0,"o":0.75,"inst":"Naval Postgraduate School","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Lei Zhang","x":309.6,"y":-293.6,"c":0,"s":4.0,"o":0.75,"inst":"Tianjin Normal University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Mohammad R. Siddiqui","x":337.1,"y":654.0,"c":3,"s":4.0,"o":0.75,"inst":"Northwestern University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Xueqin Wang","x":-57.6,"y":204.3,"c":0,"s":4.0,"o":0.75,"inst":"Anhui Medical University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Tristan de Rond","x":-145.5,"y":-345.0,"c":0,"s":4.0,"o":0.75,"inst":"Scripps Institution of Oceanography","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Mingjie Zhou","x":-160.5,"y":201.7,"c":0,"s":4.0,"o":0.75,"inst":"Fudan University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Chrysoula Gubili","x":-138.1,"y":-363.3,"c":0,"s":4.0,"o":0.75,"inst":"Agricultural Research Organization","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Shahriar Aghaeimeibodi","x":98.2,"y":-408.6,"c":0,"s":4.0,"o":0.75,"inst":"Paris Centre for Quantum Technologies","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bowen Huang","x":717.6,"y":700.2,"c":3,"s":4.0,"o":0.75,"inst":"University of North Carolina at Chapel H","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"T. C. McCabe","x":178.7,"y":-428.7,"c":0,"s":4.0,"o":0.75,"inst":"University of Canberra","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bradley S. Moore","x":-180.6,"y":-373.7,"c":0,"s":4.0,"o":0.75,"inst":"Scripps Institution of Oceanography","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yaara Porat","x":-173.6,"y":413.0,"c":0,"s":4.0,"o":0.75,"inst":"Novocure (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Fabio Alves","x":-346.8,"y":-402.6,"c":0,"s":4.0,"o":0.75,"inst":"Naval Postgraduate School","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Elena Conti","x":-84.7,"y":-519.7,"c":0,"s":4.0,"o":0.75,"inst":"A. O. Ordine Mauriziano di Torino","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"John R. Gittins","x":-164.9,"y":-341.0,"c":0,"s":4.0,"o":0.75,"inst":"National Oceanography Centre","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Christopher J. K. Richardson","x":151.5,"y":-362.2,"c":0,"s":4.0,"o":0.75,"inst":"Physical Sciences (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Khiem A. Tran","x":334.4,"y":715.0,"c":3,"s":4.0,"o":0.75,"inst":"Pacific Tower","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Asrar B. Malik","x":337.1,"y":773.6,"c":3,"s":4.0,"o":0.75,"inst":"Illinois College","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"P. Brick","x":-142.6,"y":-470.4,"c":0,"s":4.0,"o":0.75,"inst":"Yale University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jing-Ting Liu","x":340.7,"y":-219.1,"c":0,"s":4.0,"o":0.75,"inst":"Jilin Agricultural University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sekhar P. Reddy","x":275.8,"y":712.2,"c":3,"s":4.0,"o":0.75,"inst":"Johns Hopkins University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"D\u00e9bora Iglesias-Rodriguez","x":-243.4,"y":-323.5,"c":0,"s":4.0,"o":0.75,"inst":"University of California, Santa Barbara","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ali Asghar Kiani","x":-64.1,"y":374.8,"c":0,"s":4.0,"o":0.75,"inst":"Lorestan University of Medical Sciences","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Guy L. de Bruxelles","x":217.6,"y":-358.0,"c":0,"s":4.0,"o":0.75,"inst":"Lancaster University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Edo Waks","x":37.6,"y":-372.4,"c":0,"s":4.0,"o":0.75,"inst":"Joint Quantum Institute","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Paul D. Ray","x":665.1,"y":639.0,"c":3,"s":4.0,"o":0.75,"inst":"University of North Carolina at Chapel H","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"J\u00falio Massari Filho","x":592.7,"y":723.0,"c":3,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Ana Amorim","x":-146.5,"y":-380.8,"c":0,"s":4.0,"o":0.75,"inst":"University of Lisbon","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"M. D\u00e9bora Iglesias\u2010Rodr\u00edguez","x":-162.8,"y":-362.2,"c":0,"s":4.0,"o":0.75,"inst":"University of California, Santa Barbara","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Manish Mittal","x":395.4,"y":712.4,"c":3,"s":4.0,"o":0.75,"inst":"Sage (United Kingdom)","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Je\u2010Hyung Kim","x":123.7,"y":-297.2,"c":0,"s":4.0,"o":0.75,"inst":"Ulsan National Institute of Science and ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Katsuhiko Tsuchida","x":18.5,"y":87.3,"c":0,"s":4.0,"o":0.63,"inst":"Shiseido Group (Japan)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Let\u00edcia Christina Pires Gon\u00e7alves","x":228.8,"y":308.8,"c":0,"s":4.0,"o":0.75,"inst":"Universit\u00e9 C\u00f4te d'Azur","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Larissa Regina Diniz","x":212.9,"y":355.2,"c":0,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Karen Campos Fabiano","x":193.0,"y":367.7,"c":0,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Helena C. Junqueira","x":176.0,"y":353.5,"c":0,"s":4.0,"o":0.75,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Guoqing Tang","x":389.6,"y":-283.3,"c":0,"s":4.0,"o":0.3,"inst":"Chevron (United States)","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Renuka Ramalingam Manoharan","x":71.3,"y":-28.4,"c":0,"s":4.0,"o":0.65,"inst":"Nebraska Medical Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Thomas Hankemeier","x":-13.2,"y":-27.4,"c":0,"s":4.0,"o":0.55,"inst":"Leiden University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Werner Lauterborn","x":-740.7,"y":80.6,"c":2,"s":4.7,"o":0.2,"inst":"","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":7.3},{"n":"Giancarlo Cravotto","x":1152.3,"y":217.5,"c":1,"s":4.5,"o":0.52,"inst":"Italian Society of Physiotherapy","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":7.0},{"n":"Cassius V. Stevani","x":196.1,"y":288.1,"c":0,"s":4.0,"o":0.4,"inst":"Universidade de S\u00e3o Paulo","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Claudio Rossi","x":58.5,"y":-43.0,"c":0,"s":4.0,"o":0.55,"inst":"University of Siena","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Outi Supponen","x":-614.3,"y":114.5,"c":2,"s":4.0,"o":0.68,"inst":"ETH Zurich","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":6.2},{"n":"Sivakumar Manickam","x":1023.2,"y":209.0,"c":1,"s":8.6,"o":0.34,"inst":"Universiti Teknologi Brunei","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":13.3},{"n":"Atsuya Towata","x":964.2,"y":164.1,"c":1,"s":12.7,"o":0.25,"inst":"National Institute of Advanced Industria","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":19.7},{"n":"A. Triglia","x":-94.2,"y":-102.4,"c":0,"s":4.0,"o":0.19,"inst":"University of Catania","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Robert M. Lafrenie","x":-337.9,"y":135.5,"c":0,"s":4.0,"o":0.46,"inst":"Health Sciences North","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Chenhao Li","x":-384.9,"y":-43.3,"c":0,"s":4.0,"o":0.62,"inst":"Jilin University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Valentina Cauda","x":1182.4,"y":209.1,"c":1,"s":4.0,"o":0.75,"inst":"Politecnico di Torino","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":6.2},{"n":"Djamel Eddine Chafai","x":47.2,"y":-110.8,"c":0,"s":4.0,"o":0.43,"inst":"Kanazawa University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hamza Ferkous","x":755.1,"y":41.3,"c":1,"s":8.8,"o":0.46,"inst":"Badji Mokhtar University","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":13.6},{"n":"Felipe Augusto D\u00f6rr","x":150.5,"y":240.8,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Martin Weinberger","x":440.1,"y":727.0,"c":3,"s":4.0,"o":0.7,"inst":"","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Deepak Kumar Yadav","x":765.4,"y":807.6,"c":3,"s":4.0,"o":0.7,"inst":"","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Michel Flor-Henry","x":259.4,"y":-427.1,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Paul G. Spizzirri","x":-114.3,"y":237.9,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Tory M. Hagen","x":462.0,"y":902.9,"c":3,"s":4.0,"o":0.7,"inst":"","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Richard P. Leavitt","x":53.3,"y":-303.5,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"James F. Case","x":399.4,"y":-94.6,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Elmars Krausz","x":-113.5,"y":303.8,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Laurence A. Boxer","x":-185.8,"y":278.4,"c":0,"s":4.0,"o":0.7,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"L. V. Beloussov","x":9.7,"y":60.6,"c":0,"s":4.0,"o":0.26,"inst":"Lomonosov Moscow State University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Zhiying Wang","x":-111.3,"y":41.8,"c":0,"s":4.0,"o":0.75,"inst":"Qingdao University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Baorui Cao","x":-123.0,"y":6.6,"c":0,"s":4.0,"o":0.75,"inst":"Shandong University of Traditional Chine","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jinxin Du","x":-111.6,"y":22.4,"c":0,"s":4.0,"o":0.75,"inst":"Shandong First Medical University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Zhuo Wang","x":18.7,"y":-233.6,"c":0,"s":4.0,"o":0.53,"inst":"Wuhan University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Simona Privitera","x":-145.4,"y":-115.6,"c":0,"s":4.0,"o":0.42,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Nirosha J. Murugan","x":-279.1,"y":87.2,"c":0,"s":4.0,"o":0.5,"inst":"Tufts University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Maur\u0131\u0301cio S. Baptista","x":412.1,"y":871.5,"c":3,"s":4.0,"o":0.58,"inst":"Universidade de S\u00e3o Paulo","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Tingting Deng","x":-104.2,"y":1.8,"c":0,"s":4.0,"o":0.75,"inst":"Minzu University of China","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jin\u2010Ming Lin","x":352.3,"y":1020.6,"c":3,"s":4.0,"o":0.32,"inst":"Tsinghua University","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Zhibiao Wang","x":-143.3,"y":646.3,"c":4,"s":4.1,"o":0.48,"inst":"Chongqing University","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.4},{"n":"Brigitte Ksas","x":626.6,"y":815.8,"c":3,"s":4.0,"o":0.59,"inst":"Centre National de la Recherche Scientif","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Neil W. Barnett","x":-56.1,"y":336.1,"c":0,"s":4.0,"o":0.47,"inst":"","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Danail Obreschkow","x":-679.3,"y":162.2,"c":2,"s":4.0,"o":0.72,"inst":"Australian Research Council","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":6.2},{"n":"Daniel Havelka","x":15.3,"y":-108.8,"c":0,"s":4.0,"o":0.58,"inst":"Czech Academy of Sciences, Institute of ","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ronald L. Christensen","x":328.7,"y":-107.3,"c":0,"s":4.0,"o":1.0,"inst":"Bowdoin College","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"R Sperling","x":252.9,"y":-100.1,"c":0,"s":4.0,"o":1.0,"inst":"Tufts Medical Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bern Kohler","x":321.5,"y":-183.0,"c":0,"s":4.0,"o":1.0,"inst":"The Ohio State University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Bruce D. Cheson","x":245.7,"y":-175.8,"c":0,"s":4.0,"o":1.0,"inst":"Center for Cancer and Blood Disorders","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Dieter G. Weiss","x":334.3,"y":-54.7,"c":0,"s":4.0,"o":0.45,"inst":"Filadelfia","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jun Wang","x":382.1,"y":812.5,"c":3,"s":4.0,"o":0.45,"inst":"Zhejiang International Studies Universit","cl":"Mitochondrial Function and Pathology; Skin Protection and Aging","r":6.2},{"n":"Mei Wang","x":-43.6,"y":-1.5,"c":0,"s":4.0,"o":0.53,"inst":"Naturalis Biodiversity Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ricardo A. Torres-Palma","x":726.6,"y":247.5,"c":1,"s":5.8,"o":0.46,"inst":"Universidad del Valle","cl":"Ultrasound and Cavitation Phenomena; Advanced oxidation water treatment","r":9.0},{"n":"Daniel Fels","x":-1.6,"y":-122.1,"c":0,"s":4.0,"o":0.57,"inst":"Vista Klinik","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Paul S. Francis","x":0.6,"y":302.4,"c":0,"s":4.0,"o":0.64,"inst":"Deakin University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sergey V. Gudkov","x":-110.2,"y":187.3,"c":0,"s":4.0,"o":0.38,"inst":"Bauman Moscow State Technical University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ilan Arad","x":352.9,"y":355.5,"c":0,"s":4.0,"o":0.65,"inst":"Hadassah Medical Center","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Aron B. Fisher","x":370.0,"y":371.0,"c":0,"s":4.0,"o":0.65,"inst":"University of Pennsylvania","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Mohammad Amin Nematollahi","x":-4.6,"y":422.3,"c":0,"s":4.0,"o":0.65,"inst":"Shiraz University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Miao Tian","x":-458.7,"y":-56.7,"c":0,"s":4.0,"o":0.65,"inst":"Tongji University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Se Hee Eom","x":-260.5,"y":-277.2,"c":0,"s":4.0,"o":0.65,"inst":"Seoul National University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Sang Ah Park","x":-320.5,"y":-230.8,"c":0,"s":4.0,"o":0.65,"inst":"Seoul National University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Jin Hee Ok","x":-319.3,"y":-306.9,"c":0,"s":4.0,"o":0.65,"inst":"Hanyang University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Moo Joon Lee","x":-379.0,"y":-279.1,"c":0,"s":4.0,"o":0.65,"inst":"Seokyeong University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hee Chang Kang","x":-288.7,"y":-161.8,"c":0,"s":4.0,"o":0.65,"inst":"Inha University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yeong Du Yoo","x":-246.6,"y":-212.7,"c":0,"s":4.0,"o":0.65,"inst":"Kunsan National University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Hae Jin Jeong","x":-354.6,"y":-163.0,"c":0,"s":4.0,"o":0.65,"inst":"Seoul National University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Ji Hyun You","x":-395.0,"y":-215.2,"c":0,"s":4.0,"o":0.65,"inst":"Seoul National University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Liewei Zhang","x":-51.3,"y":33.3,"c":0,"s":4.0,"o":0.45,"inst":"Shandong University of Traditional Chine","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Yong Wang","x":-55.1,"y":14.2,"c":0,"s":4.0,"o":0.45,"inst":"Yichun University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"T. L. Veprintsev","x":-166.5,"y":158.8,"c":0,"s":4.0,"o":0.45,"inst":"Institute of Biochemical Physics NM Eman","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Trevor A. Smith","x":-0.2,"y":236.6,"c":0,"s":4.0,"o":0.45,"inst":"The University of Melbourne","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Tohru Tominaga","x":18.1,"y":-397.8,"c":0,"s":4.0,"o":0.45,"inst":"Kyoto University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Guangxi Wang","x":-29.1,"y":-463.3,"c":0,"s":4.0,"o":0.45,"inst":"Peking University","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Toshiyuki Imaizumi","x":-62.2,"y":-389.7,"c":0,"s":4.0,"o":0.45,"inst":"National Agriculture and Food Research O","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2},{"n":"Dan Song","x":-209.9,"y":671.6,"c":4,"s":4.0,"o":0.55,"inst":"Chongqing University","cl":"Ultrasound and Cavitation Phenomena; Quantum Electrodynamics and Casimir Effect","r":6.2},{"n":"Michel Versluis","x":-882.7,"y":63.7,"c":2,"s":5.3,"o":0.59,"inst":"University of Twente","cl":"Ultrasound and Cavitation Phenomena; Ultrasound and Hyperthermia Applications","r":8.2},{"n":"R. R. Alfano","x":-116.6,"y":-237.3,"c":0,"s":4.0,"o":0.4,"inst":"The Graduate Center, CUNY","cl":"Biofield Effects and Biophysics; bioluminescence and chemiluminescence research","r":6.2}],"edges":[[0,2],[3,106],[7,1],[12,2],[19,34],[12,0],[249,66],[318,18],[1,64],[7,64],[28,67],[34,256],[1,119],[31,22],[7,119],[19,256],[9,6],[140,18],[26,11],[255,1],[255,7],[255,119],[64,119],[19,104],[10,3],[255,64],[104,34],[278,67],[54,0],[44,42],[5,27],[10,39],[19,121],[121,34],[24,61],[105,27],[90,8],[1,3],[286,4],[10,1],[105,248],[118,0],[1,2],[12,1],[1,0],[103,92],[283,59],[285,47],[105,5],[36,17],[5,293],[10,7],[10,64],[21,17],[255,10],[257,67],[11,8],[10,119],[26,8],[5,103],[37,138],[293,92],[35,6],[65,25],[261,0],[5,92],[132,4],[249,29],[104,256],[12,3],[40,58],[17,55],[36,55],[36,21],[3,2],[24,97],[103,293],[11,93],[105,293],[103,27],[30,276],[20,4],[126,137],[101,32],[248,293],[1,254],[253,47],[92,27],[293,27],[105,92],[3,0],[254,64],[7,254],[7,3],[33,24],[123,0],[261,2],[35,9],[278,28],[5,248],[11,49],[248,92],[257,28],[21,55],[54,118],[105,103],[3,22],[26,49],[97,61],[123,294],[3,64],[11,37],[29,18],[248,103],[24,25],[11,89],[90,110],[37,93],[66,22],[93,89],[124,121],[13,15],[65,99],[13,14],[13,16],[5,17],[17,116],[3,119],[36,5],[19,124],[253,285],[248,27],[9,247],[33,251],[10,294],[48,4],[14,16],[118,2],[15,14],[296,284],[15,16],[29,66],[6,247],[30,26],[36,116],[123,2],[26,89],[31,66],[104,121],[46,50],[255,3],[260,4],[62,6],[3,31],[4,8],[274,275],[5,4],[34,277],[19,277],[21,116],[6,4],[5,21],[116,55],[33,125],[10,106],[5,55],[114,112],[26,4],[11,4],[13,38],[114,115],[121,256],[16,23],[115,112],[124,34],[14,23],[39,294],[57,46],[57,50],[12,118],[15,23],[13,23],[273,17],[21,273],[275,17],[275,273],[275,21],[274,17],[241,40],[280,275],[26,93],[274,273],[272,32],[274,21],[280,17],[280,273],[280,21],[280,274],[35,247],[278,257],[9,62],[33,97],[252,6],[122,63],[71,70],[91,251],[9,252],[261,123],[30,11],[4,56],[104,277],[318,29],[37,89],[15,109],[9,5],[102,110],[16,109],[14,109],[23,38],[13,109],[113,112],[35,62],[9,20],[9,4],[286,20],[20,5],[20,6],[15,38],[5,6],[115,113],[114,113],[132,48],[14,38],[33,25],[16,38],[111,247],[6,111],[36,293],[293,17],[293,55],[9,111],[121,277],[308,307],[308,309],[308,306],[43,238],[309,307],[308,302],[251,24],[305,303],[305,302],[305,304],[305,307],[305,309],[305,306],[305,308],[307,302],[308,304],[306,309],[308,303],[309,303],[306,302],[82,51],[81,51],[309,304],[309,302],[306,304],[82,81],[306,303],[306,307],[91,24],[307,304],[110,8],[49,27],[33,91],[36,311],[128,282],[33,242],[129,131],[129,128],[317,130],[129,127],[311,116],[317,127],[317,128],[317,131],[311,17],[311,21],[129,130],[129,282],[132,105],[132,248],[105,4],[4,248],[36,310],[310,116],[310,17],[310,21],[102,90],[304,303],[36,27],[129,317],[17,27],[24,242],[130,282],[242,97],[127,282],[127,130],[310,311],[128,130],[128,127],[131,282],[131,130],[131,127],[40,27],[131,128],[9,40],[317,282],[36,103],[36,92],[49,8],[304,302],[307,303],[302,303],[3,254],[314,316],[314,315],[316,315],[252,247],[252,111],[273,55],[19,5],[5,40],[299,298],[313,284],[49,4],[279,244],[279,24],[274,55],[258,60],[318,140],[65,298],[299,65],[254,119],[118,261],[36,275],[36,274],[280,55],[280,36],[286,48],[250,254],[5,116],[138,89],[106,64],[93,138],[11,138],[26,138],[275,55],[105,40],[7,106],[1,106],[255,254],[36,273],[279,61],[243,97],[279,245],[279,97],[24,245],[24,243],[244,61],[279,243],[243,61],[4,27],[52,53],[188,189],[244,97],[244,245],[195,99],[33,61],[245,97],[244,24],[245,61],[244,243],[110,134],[272,101],[243,245],[105,49],[5,49],[291,51],[193,51],[198,248],[82,192],[198,105],[240,234],[5,311],[240,217],[240,268],[240,225],[52,301],[82,188],[53,301],[81,190],[189,51],[132,20],[188,51],[188,191],[190,191],[81,193],[81,189],[193,189],[132,286],[81,191],[193,190],[190,51],[190,189],[193,191],[189,191],[188,193],[188,81],[192,191],[192,51],[51,191],[192,189],[192,190],[192,193],[192,81],[23,109],[192,188],[82,191],[48,20],[82,189],[82,190],[82,193],[188,190],[153,161],[5,310],[160,163],[160,158],[160,159],[160,153],[160,152],[160,161],[156,147],[156,149],[156,163],[156,68],[156,158],[156,159],[156,153],[156,152],[156,161],[147,149],[160,68],[160,149],[295,49],[160,147],[150,153],[150,152],[150,161],[155,160],[155,156],[155,147],[155,149],[155,163],[155,68],[155,158],[155,159],[155,153],[155,152],[155,161],[160,156],[147,163],[147,68],[147,158],[147,159],[68,153],[68,152],[68,161],[158,159],[158,153],[295,4],[158,152],[158,161],[159,153],[159,152],[159,161],[153,152],[234,268],[152,161],[8,41],[68,159],[68,158],[163,161],[149,159],[147,153],[147,152],[147,161],[149,163],[149,68],[149,158],[149,153],[163,152],[149,152],[149,161],[163,68],[163,158],[163,159],[163,153],[234,217],[224,237],[234,225],[258,78],[60,76],[60,75],[96,78],[96,76],[96,75],[96,60],[258,76],[53,258],[258,75],[258,96],[53,78],[53,76],[53,75],[53,60],[60,78],[75,76],[75,78],[76,78],[90,319],[136,25],[36,73],[36,94],[73,94],[73,21],[73,17],[73,116],[73,55],[94,21],[94,17],[94,116],[94,55],[53,96],[52,78],[217,268],[74,75],[77,258],[77,53],[77,52],[77,80],[74,78],[74,76],[74,60],[52,76],[74,96],[74,258],[74,53],[74,52],[74,80],[74,77],[77,96],[77,60],[77,75],[77,76],[77,78],[80,52],[80,53],[80,258],[80,96],[80,60],[80,75],[80,76],[80,78],[52,258],[52,96],[52,60],[52,75],[35,252],[35,111],[258,301],[220,214],[43,220],[43,216],[43,214],[43,117],[43,237],[220,216],[220,117],[60,301],[220,237],[220,238],[216,214],[216,117],[216,237],[216,238],[224,238],[150,158],[224,117],[224,214],[224,216],[224,220],[224,43],[286,260],[286,8],[21,27],[105,17],[105,21],[36,105],[37,8],[222,210],[268,225],[217,225],[214,117],[214,237],[214,238],[9,59],[26,37],[251,61],[91,242],[79,95],[91,97],[4,72],[260,72],[54,2],[251,97],[62,59],[283,62],[279,91],[22,254],[59,6],[283,6],[117,237],[283,9],[35,59],[35,283],[6,27],[9,27],[102,256],[102,34],[102,104],[102,19],[12,261],[5,32],[32,4],[237,238],[117,238],[150,159],[262,152],[150,68],[70,184],[186,71],[186,187],[186,70],[186,184],[186,185],[71,187],[71,184],[71,185],[187,70],[187,184],[187,185],[70,185],[183,184],[184,185],[106,119],[65,195],[97,25],[61,25],[289,288],[289,287],[289,290],[288,287],[288,290],[287,290],[183,185],[183,70],[229,211],[84,85],[87,86],[87,84],[87,85],[87,40],[88,86],[88,84],[88,85],[88,40],[86,84],[86,85],[86,40],[84,40],[183,187],[85,40],[281,145],[182,183],[182,186],[182,71],[182,187],[182,70],[182,184],[182,185],[183,186],[183,71],[139,58],[229,246],[165,148],[6,201],[207,209],[7,18],[1,18],[3,18],[65,125],[33,166],[3,141],[141,106],[35,264],[35,201],[6,264],[264,201],[221,207],[43,231],[133,269],[6,40],[299,99],[298,99],[10,31],[10,22],[1,22],[310,55],[311,55],[232,300],[221,209],[271,208],[211,246],[230,226],[3,63],[106,63],[120,27],[30,49],[227,212],[227,230],[227,226],[227,239],[212,230],[212,226],[212,239],[230,239],[215,208],[226,239],[206,235],[206,218],[235,218],[181,108],[123,63],[196,197],[233,219],[233,265],[219,265],[215,271],[87,88],[49,56],[132,56],[173,176],[172,174],[172,171],[172,168],[172,169],[172,176],[172,263],[173,177],[173,174],[173,171],[173,168],[173,169],[173,263],[172,173],[177,174],[177,171],[177,168],[177,169],[177,176],[177,263],[174,171],[174,168],[174,169],[174,176],[174,263],[172,177],[170,263],[266,284],[175,174],[200,199],[293,21],[293,116],[248,40],[293,40],[92,40],[167,107],[175,170],[175,172],[175,173],[175,177],[175,171],[170,176],[175,168],[175,169],[175,176],[175,263],[170,172],[170,173],[170,177],[170,174],[170,171],[170,168],[170,169],[171,168],[171,169],[171,176],[223,228],[98,143],[98,144],[143,144],[3,66],[66,106],[19,27],[34,27],[256,27],[180,179],[180,108],[179,108],[270,296],[171,263],[270,313],[270,213],[270,266],[270,284],[296,313],[296,213],[296,266],[313,213],[313,266],[213,266],[213,284],[142,144],[142,143],[142,98],[203,205],[168,169],[168,176],[168,263],[169,176],[169,263],[176,263],[35,202],[35,204],[35,203],[35,205],[62,202],[62,204],[62,203],[62,205],[202,6],[202,204],[202,203],[202,205],[6,204],[6,203],[6,205],[204,203],[204,205],[165,69],[165,162],[150,163],[91,163],[154,153],[154,152],[154,161],[91,164],[91,157],[91,150],[91,155],[91,160],[91,156],[91,147],[91,149],[91,68],[154,158],[91,158],[91,159],[91,153],[91,152],[91,161],[251,164],[251,157],[251,150],[251,155],[251,160],[251,156],[154,159],[154,68],[251,149],[262,153],[262,24],[262,150],[262,155],[262,160],[262,156],[262,147],[262,149],[262,163],[262,68],[262,158],[262,159],[262,161],[154,163],[154,91],[154,251],[154,164],[154,157],[154,24],[154,150],[154,155],[154,160],[154,156],[154,147],[154,149],[251,147],[251,163],[165,151],[24,149],[157,68],[157,158],[157,159],[157,153],[157,152],[157,161],[24,150],[24,155],[24,160],[24,156],[24,147],[24,163],[157,149],[24,68],[24,158],[24,159],[24,153],[24,152],[24,161],[150,155],[150,160],[150,156],[150,147],[150,149],[157,163],[157,147],[251,68],[164,147],[251,158],[251,159],[251,153],[251,152],[251,161],[164,157],[164,24],[164,150],[164,155],[164,160],[164,156],[164,149],[157,156],[164,163],[164,68],[164,158],[164,159],[164,153],[164,152],[164,161],[157,24],[157,150],[157,155],[157,160],[262,157],[262,164],[262,251],[69,159],[69,157],[69,24],[69,150],[69,155],[69,160],[69,156],[69,147],[69,149],[69,163],[69,68],[69,158],[69,153],[69,251],[69,152],[69,161],[148,162],[148,151],[148,262],[148,154],[148,91],[148,251],[148,164],[148,157],[148,24],[69,164],[69,91],[262,91],[165,147],[165,262],[165,154],[165,91],[165,251],[165,164],[165,157],[165,24],[165,150],[165,155],[165,160],[165,156],[165,149],[69,154],[165,163],[165,68],[165,158],[165,159],[165,153],[165,152],[165,161],[69,148],[69,162],[69,151],[69,262],[148,150],[148,155],[148,160],[151,155],[162,153],[162,152],[162,161],[151,262],[151,154],[151,91],[151,251],[151,164],[151,157],[151,24],[151,150],[151,160],[148,156],[151,156],[151,147],[151,149],[151,163],[151,68],[151,158],[151,159],[151,153],[151,152],[151,161],[262,154],[162,159],[162,158],[162,68],[162,163],[148,147],[148,149],[148,163],[148,68],[148,158],[148,159],[148,153],[148,152],[148,161],[162,151],[162,262],[162,154],[162,91],[162,251],[162,164],[162,157],[162,24],[162,150],[162,155],[162,160],[162,156],[162,147],[162,149],[20,56]],"palette":{"0":"#ffd24a","3":"#ff6b6b","1":"#37d6c3","2":"#5aa9ff","4":"#b98cff","6":"#5ad18a","-1":"#7c8698"},"names":{"0":"Biophoton / UPE core","3":"ROS / redox / biochemiluminescence","1":"Sonochemistry / cavitation","2":"Bubble & fluid physics","4":"Sonoluminescence physics","6":"Nanobubbles","-1":"Other / adjacency"},"snapshot":"2026-07"}</script>
+<script>
+(function () {
+  "use strict";
+  var DATA  = JSON.parse(document.getElementById("graph-data").textContent);
+  var NODES = DATA.nodes, EDGES = DATA.edges;
+  var PAL = DATA.palette, NAMES = DATA.names;
+
+  document.getElementById("n-nodes").textContent = NODES.length;
+  document.getElementById("snap").textContent = DATA.snapshot;
+  document.getElementById("meta").textContent =
+    NODES.length + " researchers · " + EDGES.length + " co-authorships";
+
+  var adj = NODES.map(function () { return []; });
+  EDGES.forEach(function (e) { adj[e[0]].push(e[1]); adj[e[1]].push(e[0]); });
+
+  var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  var view = { x: 0, y: 0, k: 1 };
+  var W = 0, H = 0, dpr = 1;
+  var mode = "community";
+  var hidden = {};
+  var hover = -1, pinned = -1;
+  var matched = null;
+
+  // ---- colour ------------------------------------------------------------
+  function hex2rgb(h) {
+    return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  }
+  var RAMP = ["#3b4354", "#4f7fd0", "#46c4a5", "#ffd24a"].map(hex2rgb);
+  function opennessColor(o) {
+    var t = Math.max(0, Math.min(1, o)) * (RAMP.length - 1);
+    var i = Math.min(RAMP.length - 2, Math.floor(t)), f = t - i;
+    var a = RAMP[i], b = RAMP[i + 1];
+    return "rgb(" + Math.round(a[0] + (b[0] - a[0]) * f) + "," +
+                    Math.round(a[1] + (b[1] - a[1]) * f) + "," +
+                    Math.round(a[2] + (b[2] - a[2]) * f) + ")";
+  }
+  function nodeColor(n) {
+    return mode === "openness" ? opennessColor(n.o) : (PAL[String(n.c)] || "#7c8698");
+  }
+  function visible(n) { return !hidden[String(n.c)]; }
+  function dimmed(i) {
+    if (matched && !matched.has(i)) return true;
+    var focus = pinned >= 0 ? pinned : hover;
+    if (focus < 0 || i === focus) return false;
+    return adj[focus].indexOf(i) === -1;
+  }
+
+  // ---- transform ---------------------------------------------------------
+  function sx(n) { return (n.x + view.x) * view.k + W / 2; }
+  function sy(n) { return (n.y + view.y) * view.k + H / 2; }
+  function toWorld(px, py) { return [(px - W / 2) / view.k - view.x, (py - H / 2) / view.k - view.y]; }
+  function rad(n) { return Math.max(1.2, n.r * view.k); }
+
+  function fit() {
+    var vis = NODES.filter(visible);
+    if (!vis.length) vis = NODES;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    vis.forEach(function (n) {
+      if (n.x - n.r < x0) x0 = n.x - n.r;
+      if (n.x + n.r > x1) x1 = n.x + n.r;
+      if (n.y - n.r < y0) y0 = n.y - n.r;
+      if (n.y + n.r > y1) y1 = n.y + n.r;
+    });
+    var pad = 62;   // room for the labels that sit above the outermost nodes
+    view.k = Math.min((W - pad * 2) / Math.max(1, x1 - x0), (H - pad * 2) / Math.max(1, y1 - y0));
+    view.k = Math.max(0.02, Math.min(4, view.k));
+    view.x = -(x0 + x1) / 2;
+    view.y = -(y0 + y1) / 2;
+    draw();
+  }
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  // ---- draw --------------------------------------------------------------
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    var focus = pinned >= 0 ? pinned : hover;
+    var near = focus >= 0 ? adj[focus] : null;
+
+    // island captions, under the outer edge of each island so they never sit on nodes
+    var bb = {};
+    NODES.forEach(function (n) {
+      if (!visible(n)) return;
+      var k = String(n.c);
+      if (!bb[k]) bb[k] = [Infinity, Infinity, -Infinity, -Infinity];
+      var b = bb[k];
+      if (n.x - n.r < b[0]) b[0] = n.x - n.r;
+      if (n.y - n.r < b[1]) b[1] = n.y - n.r;
+      if (n.x + n.r > b[2]) b[2] = n.x + n.r;
+      if (n.y + n.r > b[3]) b[3] = n.y + n.r;
+    });
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.font = "600 12px ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif";
+    ctx.fillStyle = "rgba(230,237,247,.30)";
+    Object.keys(bb).forEach(function (k) {
+      var b = bb[k];
+      ctx.fillText((NAMES[k] || "Other").toUpperCase(),
+                   ((b[0] + b[2]) / 2 + view.x) * view.k + W / 2,
+                   (b[3] + view.y) * view.k + H / 2 + 12);
+    });
+
+    // edges
+    EDGES.forEach(function (e) {
+      var a = NODES[e[0]], b = NODES[e[1]];
+      if (!visible(a) || !visible(b)) return;
+      var lit = focus >= 0 && (e[0] === focus || e[1] === focus);
+      if (lit)                { ctx.strokeStyle = "rgba(255,210,74,.6)";  ctx.lineWidth = 1.5; }
+      else if (focus >= 0)    { ctx.strokeStyle = "rgba(120,132,152,.07)"; ctx.lineWidth = 1; }
+      else                    { ctx.strokeStyle = "rgba(120,132,152,.22)"; ctx.lineWidth = 1; }
+      ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke();
+    });
+
+    // nodes, dimmed ones first so highlights land on top
+    var order = [];
+    NODES.forEach(function (n, i) { if (visible(n)) order.push(i); });
+    order.sort(function (a, b) { return (dimmed(a) ? 0 : 1) - (dimmed(b) ? 0 : 1); });
+
+    order.forEach(function (i) {
+      var n = NODES[i], px = sx(n), py = sy(n), r = rad(n);
+      if (px < -60 || px > W + 60 || py < -60 || py > H + 60) return;
+      var d = dimmed(i);
+      ctx.globalAlpha = d ? 0.15 : 1;
+      ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2832);
+      ctx.fillStyle = nodeColor(n); ctx.fill();
+      if (!d && r > 2.2) { ctx.lineWidth = 1; ctx.strokeStyle = "rgba(14,17,23,.8)"; ctx.stroke(); }
+      if (i === focus) {
+        ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.strokeStyle = "#fff";
+        ctx.beginPath(); ctx.arc(px, py, r + 3.5, 0, 6.2832); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    });
+
+    // labels — placed greedily, most important first, dropping any that collide
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    ctx.font = "500 11px ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif";
+    var cand = [];
+    order.forEach(function (i) {
+      if (dimmed(i)) return;
+      var r = rad(NODES[i]), px = sx(NODES[i]), py = sy(NODES[i]);
+      if (px < -70 || px > W + 70 || py < -20 || py > H + 20) return;
+      var pri;
+      if (i === focus) pri = 0;
+      else if (near && near.indexOf(i) !== -1) pri = 1;
+      else if (matched && matched.has(i)) pri = 2;
+      else if (r > 7) pri = 3;
+      else return;
+      cand.push({ i: i, pri: pri, r: r, px: px, py: py });
+    });
+    cand.sort(function (a, b) { return a.pri - b.pri || b.r - a.r; });
+
+    var boxes = [];
+    cand.forEach(function (c) {
+      var name = NODES[c.i].n;
+      var w = ctx.measureText(name).width;
+      var ty = c.py - c.r - 3;
+      var box = [c.px - w / 2 - 2, ty - 11, c.px + w / 2 + 2, ty + 2];
+      for (var j = 0; j < boxes.length; j++) {
+        var o = boxes[j];
+        if (box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1]) return;
+      }
+      boxes.push(box);
+      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(14,17,23,.92)";
+      ctx.strokeText(name, c.px, ty);
+      ctx.fillStyle = c.i === focus ? "#fff" : "#c9d4e4";
+      ctx.fillText(name, c.px, ty);
+    });
+  }
+
+  // ---- hit testing -------------------------------------------------------
+  function pick(px, py) {
+    var best = -1, bd = Infinity;
+    for (var i = 0; i < NODES.length; i++) {
+      var n = NODES[i];
+      if (!visible(n)) continue;
+      var r = Math.max(5, rad(n)) + 2;
+      var dx = sx(n) - px, dy = sy(n) - py, d2 = dx * dx + dy * dy;
+      if (d2 <= r * r && d2 < bd) { bd = d2; best = i; }
+    }
+    return best;
+  }
+
+  // ---- panels ------------------------------------------------------------
+  var tip = document.getElementById("tip");
+  function showTip(i, px, py) {
+    var n = NODES[i];
+    tip.innerHTML = '<div class="t-n"></div><div class="t-i"></div>';
+    tip.querySelector(".t-n").textContent = n.n;
+    tip.querySelector(".t-i").textContent =
+      (n.inst || "unaffiliated") + " · openness " + n.o.toFixed(2);
+    tip.style.left = px + "px";
+    tip.style.top = (py - 12) + "px";
+    tip.style.opacity = 1;
+  }
+  function hideTip() { tip.style.opacity = 0; }
+
+  var detail = document.getElementById("detail");
+  function renderDetail(i) {
+    while (detail.firstChild) detail.removeChild(detail.firstChild);
+    var lbl = document.createElement("div");
+    lbl.className = "lbl"; lbl.textContent = "Selected";
+    detail.appendChild(lbl);
+    if (i < 0) {
+      var p = document.createElement("div");
+      p.className = "empty";
+      p.textContent = "Hover a node for a quick look, click to pin it here.";
+      detail.appendChild(p);
+      return;
+    }
+    var n = NODES[i];
+    var nm = document.createElement("div");
+    nm.className = "nm"; nm.textContent = n.n;
+    var inst = document.createElement("div");
+    inst.className = "inst"; inst.textContent = n.inst || "unaffiliated";
+    var dl = document.createElement("dl");
+    [["Sub-field", NAMES[String(n.c)] || "Other"],
+     ["Openness", n.o.toFixed(2)],
+     ["Co-authors", adj[i].length + " in view"],
+     ["Topics", n.cl || "—"]].forEach(function (kv) {
+      var dt = document.createElement("dt"); dt.textContent = kv[0];
+      var dd = document.createElement("dd"); dd.textContent = kv[1];
+      dl.appendChild(dt); dl.appendChild(dd);
+    });
+    detail.appendChild(nm); detail.appendChild(inst); detail.appendChild(dl);
+  }
+
+  // ---- legend ------------------------------------------------------------
+  var counts = {};
+  NODES.forEach(function (n) { var k = String(n.c); counts[k] = (counts[k] || 0) + 1; });
+  var legend = document.getElementById("legend");
+  Object.keys(NAMES)
+    .filter(function (k) { return counts[k]; })
+    .sort(function (a, b) { return counts[b] - counts[a]; })
+    .forEach(function (k) {
+      var row = document.createElement("div");
+      row.className = "legend-row";
+      var dot = document.createElement("span");
+      dot.className = "dot"; dot.style.background = PAL[k];
+      var nm = document.createElement("span");
+      nm.className = "legend-name"; nm.textContent = NAMES[k];
+      var ct = document.createElement("span");
+      ct.className = "legend-n"; ct.textContent = counts[k];
+      row.appendChild(dot); row.appendChild(nm); row.appendChild(ct);
+      row.onclick = function () {
+        hidden[k] = !hidden[k];
+        row.classList.toggle("off", !!hidden[k]);
+        if (pinned >= 0 && !visible(NODES[pinned])) { pinned = -1; renderDetail(-1); }
+        draw();
+      };
+      legend.appendChild(row);
+    });
+
+  // ---- interaction -------------------------------------------------------
+  var dragging = false, moved = false, last = [0, 0];
+
+  cv.addEventListener("mousedown", function (e) {
+    dragging = true; moved = false; last = [e.clientX, e.clientY];
+    cv.classList.add("drag");
+  });
+  window.addEventListener("mouseup", function () { dragging = false; cv.classList.remove("drag"); });
+  window.addEventListener("mousemove", function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - last[0], dy = e.clientY - last[1];
+    if (Math.abs(dx) + Math.abs(dy) > 2) moved = true;
+    view.x += dx / view.k; view.y += dy / view.k;
+    last = [e.clientX, e.clientY];
+    hideTip(); draw();
+  });
+
+  cv.addEventListener("mousemove", function (e) {
+    if (dragging) return;
+    var r = cv.getBoundingClientRect();
+    var px = e.clientX - r.left, py = e.clientY - r.top;
+    var i = pick(px, py);
+    if (i !== hover) {
+      hover = i;
+      if (i >= 0) { showTip(i, px, py); if (pinned < 0) renderDetail(i); }
+      else { hideTip(); if (pinned < 0) renderDetail(-1); }
+      draw();
+    } else if (i >= 0) { showTip(i, px, py); }
+  });
+  cv.addEventListener("mouseleave", function () {
+    hover = -1; hideTip(); if (pinned < 0) renderDetail(-1); draw();
+  });
+
+  cv.addEventListener("click", function (e) {
+    if (moved) return;
+    var r = cv.getBoundingClientRect();
+    var i = pick(e.clientX - r.left, e.clientY - r.top);
+    pinned = (i >= 0 && i === pinned) ? -1 : i;
+    renderDetail(pinned >= 0 ? pinned : hover);
+    draw();
+  });
+
+  cv.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    var r = cv.getBoundingClientRect();
+    var px = e.clientX - r.left, py = e.clientY - r.top;
+    var before = toWorld(px, py);
+    view.k = Math.max(0.02, Math.min(14, view.k * Math.exp(-e.deltaY * 0.0016)));
+    var after = toWorld(px, py);
+    view.x += after[0] - before[0];
+    view.y += after[1] - before[1];
+    draw();
+  }, { passive: false });
+
+  function zoomBy(f) {
+    var before = toWorld(W / 2, H / 2);
+    view.k = Math.max(0.02, Math.min(14, view.k * f));
+    var after = toWorld(W / 2, H / 2);
+    view.x += after[0] - before[0]; view.y += after[1] - before[1];
+    draw();
+  }
+  document.getElementById("zi").onclick = function () { zoomBy(1.35); };
+  document.getElementById("zo").onclick = function () { zoomBy(1 / 1.35); };
+  document.getElementById("zr").onclick = function () { pinned = -1; renderDetail(-1); fit(); };
+
+  // search
+  var hits = document.getElementById("hits");
+  document.getElementById("q").addEventListener("input", function (e) {
+    var q = e.target.value.trim().toLowerCase();
+    if (!q) { matched = null; hits.textContent = ""; }
+    else {
+      matched = new Set();
+      NODES.forEach(function (n, i) {
+        if (n.n.toLowerCase().indexOf(q) !== -1 ||
+            (n.inst && n.inst.toLowerCase().indexOf(q) !== -1)) matched.add(i);
+      });
+      hits.textContent = matched.size + (matched.size === 1 ? " match" : " matches");
+    }
+    draw();
+  });
+
+  // colour mode
+  var mc = document.getElementById("mode-c"), mo = document.getElementById("mode-o");
+  var ramp = document.getElementById("ramp-wrap");
+  mc.onclick = function () {
+    mode = "community"; mc.classList.add("on"); mo.classList.remove("on");
+    ramp.style.display = "none"; draw();
+  };
+  mo.onclick = function () {
+    mode = "openness"; mo.classList.add("on"); mc.classList.remove("on");
+    ramp.style.display = "block"; draw();
+  };
+
+  window.addEventListener("resize", resize);
+  resize();
+  fit();
+})();
+</script>
+</body>
+</html>

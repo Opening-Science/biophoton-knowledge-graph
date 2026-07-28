@@ -1,0 +1,40 @@
+# --- local environment / secrets -------------------------------------------
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.openalex_key
+.openalex_mailto
+
+# --- OpenAlex harvest cache + working DB ------------------------------------
+# ~12 GB, keyed by entity id and fully rebuildable by rerunning the pipeline.
+biophoton-fieldmap/data/cache/
+biophoton-fieldmap/data/db/
+
+# --- bulk intermediate exports ----------------------------------------------
+# Rebuildable (build_db.py / networks.py). Also holds contacts.csv and
+# contacts_fetch_log.json, which carry corresponding-author email addresses.
+# Those are INTERNAL to OSF and must never be published — see
+# biophoton-fieldmap/NOTES_data_ethics.md.
+biophoton-fieldmap/data/exports/
+
+# --- researcher tables that still carry the internal email column -----------
+# The published equivalents are the email-stripped tables in the Zenodo
+# release, produced by src/build_release.py.
+biophoton-fieldmap/outputs/researchers*.csv
+
+# --- build artifacts too large or too derived for git -----------------------
+# The full data release is deposited on Zenodo (see CITATION.cff); regenerate
+# it locally with `python src/build_release.py`.
+biophoton-fieldmap/outputs/release/
+biophoton-fieldmap/outputs/*.zip
+biophoton-fieldmap/outputs/biophoton-field-map-v*/
+biophoton-fieldmap/outputs/papers/
+biophoton-fieldmap/outputs/pdf/
+biophoton-fieldmap/outputs/index/
+
+# Superseded duplicate of Biophoton_Field_Map_Report.html
+biophoton-fieldmap/outputs/field_map_report.html
+
+# Local Claude Code settings
+.claude/settings.local.json
