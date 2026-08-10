@@ -1,0 +1,56 @@
+# Weekly check of Cifra's public Zotero library (biophotoniq.net literature
+# list, group 2260466). When the library changes, the updated snapshot and
+# delta report are committed, and new additions open an issue so watchers are
+# notified. Deep processing (cross-reference + PDF fetch) stays local:
+# run `collect_zotero_library.py --download` after the watcher flags items.
+name: Watch Cifra's Zotero library
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: zotero-watch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check library for changes
+        id: watch
+        run: python3 biophoton-fieldmap/src/zotero_watch.py
+
+      - name: Commit updated snapshot
+        if: steps.watch.outputs.changed == 'true'
+        run: |
+          git config user.name "zotero-watch"
+          git config user.email "actions@github.com"
+          git add literature/zotero_watch.csv literature/ZOTERO_WATCH.md
+          if ! git diff --cached --quiet; then
+            git commit -m "Zotero watch: ${{ steps.watch.outputs.new_count }} new item(s) in Cifra's library"
+            git push
+          fi
+
+      - name: Open issue for new items
+        if: steps.watch.outputs.new_count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Cifra's Zotero library: ${{ steps.watch.outputs.new_count }} new item(s) ($(date -u +%F))"
+          body="The weekly watcher found new entries in the biophotoniq
+          literature library. See [ZOTERO_WATCH.md](../blob/main/literature/ZOTERO_WATCH.md)
+          for the list.
+
+          Next step (local): \`python collect_zotero_library.py --download\`
+          to cross-reference against the field map and fetch open-access
+          PDFs; consider a seed refresh if additions accumulate."
+          gh issue create --title "$title" --body "$body" --label zotero-watch \
+            || gh issue create --title "$title" --body "$body"

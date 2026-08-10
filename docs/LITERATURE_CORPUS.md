@@ -139,6 +139,21 @@ interview-slate refinement) contain candid per-person assessments and are
 kept local by editorial decision; the scripts that generate them are
 public, so any clone of the data can regenerate them.
 
+## Keeping up with the field's bibliography
+
+The corpus tracks Cifra's maintained Zotero library (group 2260466 — the
+literature list on biophotoniq.net, 381 items) on two levels:
+
+- **CI watcher** — `.github/workflows/zotero-watch.yml` checks the library
+  every Monday via `src/zotero_watch.py` (stdlib-only). Changes are
+  committed to `literature/zotero_watch.csv` + `ZOTERO_WATCH.md`, and new
+  additions open a GitHub issue.
+- **Deep collector** — `src/collect_zotero_library.py` (local; needs the
+  pipeline data) cross-references every entry against the universe and the
+  corpus, writes `literature/zotero_library.csv`, and `--download` fetches
+  missing OA PDFs. Run it after the watcher flags additions; when
+  new-to-universe items accumulate, refresh the seed set (stages A–B).
+
 ## Rebuild runbook
 
 ```bash
