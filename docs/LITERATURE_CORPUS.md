@@ -13,18 +13,18 @@ runbook at the end.
 
 | Artifact | Size | Tracked in git |
 |---|---|---|
-| `literature/papers/` — harvested OA PDFs, `<year>_<Author>_<OpenAlexID>.pdf` | 3,966 files, 10.2 GB | no (rebuildable) |
+| `literature/papers/` — harvested OA PDFs, `<year>_<Author>_<OpenAlexID>.pdf` | 4,343 files, 11.3 GB | no (rebuildable) |
 | `literature/books/`, `literature/curated/` — hand-collected material | 6 items | no |
 | `literature/manifest.csv` — every OA work: outcome, DOI, sha256, source URL, failure reason | 6,842 rows | **yes** |
 | `literature/curated.csv` — hand-collected items + corpus cross-reference | | **yes** |
 | `literature/INDEX.md` — human-readable corpus index | | **yes** |
-| `literature/fulltext.sqlite` — extracted text + mined statements | 3,972 texts, 0.43 GB | no |
-| `literature/knowledgebase.sqlite` — everything joined (see schema below) | 0.51 GB | no |
+| `literature/fulltext.sqlite` — extracted text + mined statements | 4,357 texts, 0.47 GB | no |
+| `literature/knowledgebase.sqlite` — everything joined (see schema below) | 0.55 GB | no |
 | `biophoton-fieldmap/outputs/book_planning/` — analysis outputs | | partly (see below) |
 
-Coverage: **3,966 of 6,842 open-access works (58%)**; with the universe
-only ~37% OA, the corpus holds full text for **~22% of the entire mapped
-field**, spanning 1897–2026. The 2,876 OA works that could not be fetched
+Coverage: **4,343 of 6,842 open-access works (63.5%)**; with the universe
+only ~37% OA, the corpus holds full text for **~24% of the entire mapped
+field**, spanning 1897–2026. The 2,499 OA works that could not be fetched
 are recorded per-work in the manifest with the HTTP reason — nearly all are
 publishers that refuse any client identifying itself as a robot (Wiley,
 Elsevier, ACS, OUP, SAGE, MDPI's rate limiter, …). See "Politeness policy".
@@ -75,13 +75,13 @@ on disk and `--retry-failed` re-attempts soft failures only.
 
 PyMuPDF text per page. Two things are computed here because they need page
 structure that is discarded afterwards: **quality flags** (no-text-layer /
-mostly-scanned / references-heavy — 27 of 3,972 texts lack a text layer)
+mostly-scanned / references-heavy — 27 of 4,357 texts lack a text layer)
 and **statement mining** — sentences matching high-precision markers for
 open questions, future work, limitations, controversies and measurement
 gaps, each stored with its page number. Metrology vocabulary ("detection
 limit", "dark count", …) only counts as a gap statement when the sentence
 also carries problem language, so an instrument spec is not a finding.
-4,481 statements were mined.
+4,916 statements were mined.
 
 ### Stage K — the knowledgebase
 
@@ -102,7 +102,7 @@ also carries problem language, so an instrument spec is not a finding.
 Example queries:
 
 ```sql
--- Full-text search across 3,967 papers, ranked by the field-map score
+-- Full-text search across 4,348 papers, ranked by the field-map score
 SELECT w.work_id, w.title, w.year
 FROM works_fts f JOIN works w ON w.work_id = f.work_id
 WHERE works_fts MATCH 'traceab* OR "absolute calibration"'
@@ -132,7 +132,7 @@ Published in `biophoton-fieldmap/outputs/book_planning/`:
   disputes all bottleneck on the same missing layer — calibration, absolute
   units, and inter-laboratory comparability.
 - **`open_question_statements.md`** — the ranked, themed statement corpus
-  (274 statements) behind it.
+  (310 statements) behind it.
 
 Two further planning documents (per-chapter evidence tables and the
 interview-slate refinement) contain candid per-person assessments and are
@@ -176,9 +176,8 @@ cache. Hand-collected sources are declared in a gitignored
 The corpus PDFs are open access at their sources but carry heterogeneous
 licences, so the files themselves are not redistributed here. The tracked
 manifest carries DOI, source URL, sha256 **and the per-work licence** (from
-OpenAlex): of the 3,966 PDFs on disk, **2,378 (60%) are CC-licensed or
-public domain and could lawfully be re-hosted** (1,724 CC-BY, 413
-CC-BY-NC-ND, 141 CC-BY-NC, …); the rest are free-to-read at source only.
+OpenAlex): of the 4,343 PDFs on disk, **2,589 (60%) are CC-licensed or
+public domain and could lawfully be re-hosted**; the rest are free-to-read at source only.
 Any hosting decision can therefore be made per file with
 `manifest.csv:license`. The corpus is reconstructable and verifiable
 without redistribution.

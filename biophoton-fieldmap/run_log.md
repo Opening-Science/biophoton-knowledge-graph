@@ -189,3 +189,13 @@ Wrote universe_ids.json (18561 works). OpenAlex requests this run: 620
   themed: 274 across 7 themes
 - published: open_research_questions.md + open_question_statements.md
 - internal (gitignored): chapter_evidence.md, chapter_author_refinement.md
+
+## Stage I wave 2 — retry + Semantic Scholar + Wayback layers (2026-08-10)
+
+- re-attempted 2876 failures with two new resolver layers (S2 openAccessPdf,
+  Wayback Machine for 404/410) at reduced concurrency
+- recovered: 377 -> corpus 4343 PDFs (63.5% of OA, 23.7% of universe), 11.3 GB
+- coverage by tier: seeds 74%, hop<=1 67%, UPE core 71%
+- refreshed: fulltext 4357 texts / 4916 statements; knowledgebase 4348
+  full-text works; themed statements 310
+- Zotero list: 120 of 381 held; closed-access list regenerated

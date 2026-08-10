@@ -48,8 +48,8 @@ book's chapter-0 scaffold) and
 On top of the map sits a full-text layer: every open-access PDF the map can
 reach, harvested politely (identified robot, per-host throttling, no
 impersonation), text-extracted, and joined back to the map in one queryable
-SQLite knowledgebase — **3,966 PDFs (58% of the field's OA output, 10.2 GB)**,
-4,481 mined sentences in which the field states its own open problems.
+SQLite knowledgebase — **4,343 PDFs (63.5% of the field's OA output, 11.3 GB)**,
+4,916 mined sentences in which the field states its own open problems.
 The corpus itself is not redistributed; the tracked
 [`literature/manifest.csv`](literature/manifest.csv) carries DOI, source URL
 and sha256 for every work, so it is reconstructable and verifiable. Design,

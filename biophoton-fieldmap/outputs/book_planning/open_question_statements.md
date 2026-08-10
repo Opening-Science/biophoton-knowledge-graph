@@ -2,7 +2,7 @@
 
 Sentences extracted verbatim from the full-text corpus (with page provenance), restricted to the UPE core, the ROS wing, and the seed neighbourhood. Ranked by statement kind (open_question > controversy > measurement_gap > future_work > limitation) then paper rank. Max one statement per work per theme.
 
-## Mechanism & molecular sources  (136 statements)
+## Mechanism & molecular sources  (151 statements)
 
 - "In other diseases such as ALS or HD, the link with oxidative stress is also evidenced, even if the mechanisms involved in their etiology are not fully understood."  
   -- Fabrice Collin (2019), p.10, [open_question] `W2945953380` doi:10.3390/ijms20102407
@@ -10,6 +10,10 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Yan Sun (2010), p.5, [open_question] `W2056591841` doi:10.1039/b9pp00125e
 - "Meanwhile, there are also fewer mtDNA repair mechanisms than that in nuclear DNA and mostly are poorly understood."  
   -- Jiao Luo (2019), p.11, [open_question] `W2985538915` doi:10.1016/j.arr.2019.100982
+- "How- ever, the molecular mechanism and function of Nox4 by Poldip2 remains to be determined."  
+  -- Yun Soo Bae (2011), p.10, [open_question] `W2119316269` doi:10.1007/s10059-011-0276-3
+- "Although cells regulate ROS generation for the maintenance of redox homeostasis and cellular signaling path- ways, the molecular mechanism by which the proteins located in sub-cellular organelles such as mitochondria, endoplasmic reticulum, endosome and plasma membrane regulate ROS generation still remains to be elucidated."  
+  -- Yun Soo Bae (2011), p.12, [open_question] `W2119316269` doi:10.1007/s10059-011-0276-3
 - "The exact mechanisms by which these compounds inﬂuence the AhR and Nrf2 pathways differently remain unknown [10,100,199,205]. 4.2.2."  
   -- A. Yu. Grishanova (2022), p.11, [open_question] `W4283017800` doi:10.3390/ijms23126719
 - "However, it remains unclear what is the underlying molecular mechanism."  
@@ -28,10 +32,6 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- G. F. Fedorova (2006), p.37, [open_question] `W2953285197` doi:10.3998/ark.5550190.0008.815
 - "Although the exact mechanism of biophoton production is still unclear27,28, there is increasing evidence that cells emit these photons."  
   -- Mariusz Pietruszka (2024), p.4, [open_question] `W4404582469` doi:10.1038/s41598-024-80469-0
-- "However, the “mechanism” of how diffusible ROS commu- nicate remains unclear."  
-  -- Klaudia Jomová (2025), p.4, [open_question] `W4413992750` doi:10.1007/s00204-025-04146-5
-- "Although mechanisms of cellular UPE generation remain unclear [9], it is now established that all living cells emit minuscule numbers of photons in the form of UPE as byproducts of biochemical reactions [3,10]."  
-  -- Nathan S. Babcock (2024), p.1, [open_question] `W4404871602` doi:10.1016/j.csbj.2024.11.030
 
 ## Coherence, statistics & quantum claims  (12 statements)
 
@@ -91,10 +91,12 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
 - "Future work should therefore focus on: (1) validating these biophotonic parameters in ﬁeld or greenhouse production systems with larger sample sizes and more replication cycles; (2) exploring the integration of machine learning models to improve prediction accuracy for complex traits; and (3) testing the transferability of the approach to other economically important medicinal plants. 6 Conclusion This study demonstrates that biophoton parameters, speciﬁcally the initial intensity of DL (I0), serve as a highly effective non- destructive predictor for the quality of fresh NcL."  
   -- Zhiying Wang (2025), p.15, [future_work] `W4416135829` doi:10.3389/fpls.2025.1714452
 
-## Biological function & signalling  (29 statements)
+## Biological function & signalling  (33 statements)
 
 - "The biological significance of such displays are still not understood [73]."  
   -- Aditya Srivastava (2021), p.9, [open_question] `W3161171972` doi:10.5772/intechopen.96636
+- "However, it is not understood yet, how changes in ROS levels influences the redox situation and ultimately acti- vate ROS/redox-induced signaling events."  
+  -- Baishnab C. Tripathy (2012), p.8, [open_question] `W2064549033` doi:10.4161/psb.22455
 - "Despite the identiﬁcation of several components of the 1O2 signaling pathway, it remains unclear how the 1O2 signal is transduced from the chloroplast to the nucleus, leading to changes in gene ex- pression."  
   -- Simona Birtić (2012), p.1, [open_question] `W1997960966` doi:10.1073/pnas.1115982109
 - "The described ROS functions in various ﬂy stem and undiﬀerentiated cells above indicate the possible functions of redox signaling in the regulation of the maintenance and diﬀerentiation of their mammalian counterparts; however, these functions remain to be determined."  
@@ -107,6 +109,8 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Sonia Cortassa (2004), p.9, [open_question] `W2058028795` doi:10.1529/biophysj.104.041749
 - "This brain property may be a key biophysical basis for explaining high intelligence in humans because biophoton spectral redshift could be a more economical and effective measure of bio- photonic signal communications and information processing in the human brain. intelligence | ultraweak photon emissions | biophoton imaging | glutamate | brain slices D espite remarkable advances in our understanding of brain functions, it is still unclear why human beings hold higher intelligence than other animals on Earth and which brain properties might explain the differences (1)."  
   -- Zhuo Wang (2016), p.1, [open_question] `W2483916403` doi:10.1073/pnas.1604855113
+- "It remains unknown how ROS can interact with p38 MAPK signaling during cardiogenesis."  
+  -- Min Wu (2020), p.5, [open_question] `W3082523529` doi:10.1155/2020/2102841
 - "Whether adaptive and terminal signaling of oxidative stress occurs through IRE1, as reported for the canonical UPR, remains to be determined. 4.3."  
   -- Jennifer M. Roscoe (2020), p.11, [open_question] `W3093050035` doi:10.3390/cells9102314
 - "Whether UPE is a byproduct of biological metabolism or has some informational or functional role, and the spectral fingerprints of embryos, remain unclear."  
@@ -117,17 +121,15 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Nasser Sewelam (2016), p.7, [controversy] `W2294508081` doi:10.3389/fpls.2016.00187
 - "These contradictory results imply that there are complex interactions, probably tissue and species-specific, involved in the crosstalk between the redox status and JNK signaling pathway."  
   -- Antero Salminen (2013), p.12, [controversy] `W2022970298` doi:10.3390/ijms14023834
-- "There are controversial observations on the role of SIRT1 in the neuronal survival associated with the insulin/IGF-1 signaling [189,194–196]."  
-  -- Antero Salminen (2013), p.14, [controversy] `W2022970298` doi:10.3390/ijms14023834
-- "While there are indeed many sources of 02; in the cytoplasm, estimates of their magnitude and biological significance are widely varying (the exception to the controversy is the macrophage oxidative burst, which is well-characterized and of widely-accepted bio- logical significance (58))."  
-  -- Florian L. Müller (2000), p.2, [controversy] `W1973535295` doi:10.1007/s11357-000-0022-9
 
-## Neural & brain UPE  (21 statements)
+## Neural & brain UPE  (23 statements)
 
 - "However, the link between redox balance and the vesicle components involved in neuronal trafficking remains poorly understood."  
   -- Carlos Wilson (2015), p.7, [open_question] `W1850305390` doi:10.3389/fncel.2015.00381
 - "RESULTS Brain UPE signals can be distinguished from the background signal Although UPEs have been previously linked to brain func- tions,26,40,41 it is yet to be determined whether human brain UPE signals can be distinguished from local background photon noise across several signal parameters."  
   -- H Casey (2025), p.3, [open_question] `W4407397928` doi:10.1016/j.isci.2025.112019
+- "However, it should be noted that an age-related decline in brain antioxidant enzyme activities has not been confirmed by other investigators and remains controversial (Serrano & Klann, 2004)."  
+  -- Wulf Dröge (2007), p.5, [open_question] `W1967874462` doi:10.1111/j.1474-9726.2007.00294.x
 - "Neither measurements nor calculations of SAR levels in the brain and spinal cord have been presented and, therefore, the level of exposure of these tissues remains unclear."  
   -- David Schuermann (2021), p.7, [open_question] `W3142980432` doi:10.3390/ijms22073772
 - "These results encourage the view that some quantum processes may be going on in the brain and may help answer some of the previously unanswered questions in neuroscience."  
@@ -148,15 +150,15 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Giovanna Cenini (2019), p.6, [controversy] `W2944764789` doi:10.1155/2019/2105607
 - "In particular, the AD brains showed abnormal expression of mitochondrial fusion and ﬁssion proteins [230], but the results are controversial."  
   -- Giovanna Cenini (2019), p.8, [controversy] `W2944764789` doi:10.1155/2019/2105607
-- "Although it is controversial to assume that the brain perfroms iterative processes during vision [4,40,44], the visual homunculus, which is a matching process, may be achieved by iterative processes. 8."  
-  -- István Bókkon (2010), p.8, [controversy] `W2088894068` doi:10.48550/arxiv.1012.3618
-- "Future studies may ﬁnd success in using select ﬁlters and ampliﬁers to sieve and enhance UPE signal features from healthy and diseased brains. 8 iScience 28, 112019, March 21, 2025 iScience Article ll OPEN ACCESS"  
-  -- H Casey (2025), p.9, [future_work] `W4407397928` doi:10.1016/j.isci.2025.112019
+- "Studies on the relationship between TSH levels and cognitive function in elderly patients also show contradictory results."  
+  -- Iván Villanueva (2013), p.7, [controversy] `W2069511021` doi:10.1155/2013/218145
 
-## Clinical & diagnostic applications  (51 statements)
+## Clinical & diagnostic applications  (63 statements)
 
 - "Although others may be important in sig- naling and disease (155, 413), their functions remain poorly understood."  
   -- Manish Mittal (2013), p.2, [open_question] `W2084141237` doi:10.1089/ars.2012.5149
+- "Nonetheless, the precise role that oxidants play remains controversial and often beset with the problem as to whether a rise in ROS causes or merely correlates with the disease state."  
+  -- Toren Finkel (2011), p.6, [open_question] `W2115708356` doi:10.1083/jcb.201102095
 - "mitochondria play a critical role in the ageing process, but it remains unclear whether it is a cause or consequence (Sanz, 2016). 3.2 Cardiovascular diseases (CVDs) Cardiac myocytes have a high number of mitochondria which makes them more susceptible to oxidative damage."  
   -- Jiao Luo (2019), p.14, [open_question] `W2985538915` doi:10.1016/j.arr.2019.100982
 - "ROS and non-malignant disease Although the above-mentioned SODm may be beneﬁcial in cancer therapy, it is so far unknown whether their antioxidant eﬀect could be of use in other diseases where oxidative stress occurs without proper malignancy."  
@@ -165,6 +167,8 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Klaudia Jomová (2025), p.35, [open_question] `W4413992750` doi:10.1007/s00204-025-04146-5
 - "Many studies have been conducted using optimized in vitro cell culture media; however, it remains unknown how the metabolic microenvironment in healthy or disease-affected organs affects ROS production in vivo and, consequently, T-cell activation and differentiation."  
   -- Panyin Shu (2023), p.7, [open_question] `W4378219846` doi:10.3389/fimmu.2023.1199233
+- "Whether dietary antioxidants constitute appropriate therapy remains open for debate."  
+  -- Eric Klann (2010), p.13, [open_question] `W1986219537` doi:10.1089/ars.2010.3208
 - "Thiamine deﬁ ciency has been linked to the promotion of neurodegeneration and an increase in oxidative stress (Gibson and Zhang 2002); however, its effectiveness in treating diseases associated with free radi- cals is still unclear (Bonnefont-Rousselot 2004; Nascimento et al 2006)."  
   -- Khalid Rahman (2007), p.13, [open_question] `W88937860`
 - "Although mitochondrial function and oxidative phos- phorylation is impaired in tumor cells, it remains unclear how these impairments relate to carcinogenesis and to the large number of somatic mutations and chro- mosomal abnormalities found in tumors [7,15,91-93]."  
@@ -179,12 +183,8 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Dao‐Fu Dai (2014), p.15, [open_question] `W2063087581` doi:10.1186/2046-2395-3-6
 - "Cortical dementia Alzheimer’s disease (AD): Alzheimer’s disease (AD) is the most common form of dementia, the cause of which still largely remains unknown."  
   -- Anuradha Tarafdar (2018), p.4, [open_question] `W2902683674` doi:10.3390/ijms19123824
-- "Oxidative stress is a further pathological hallmark of tauopathies, but its precise role in the disease process is poorly understood."  
-  -- Seyedeh Maryam Alavi Naini (2015), p.1, [open_question] `W2130940116` doi:10.1155/2015/151979
-- "Thus, current consensus indicates that damaging mitochondria, oxidative stress and ultimately an energetic crisis by ROS accelerates aging and triggers neurodegenerative diseases (Stefanatos and Sanz, 2018). mtDNA damage is associated with aging, but it is unclear whether mitochondrial dysfunction or mtDNA damage is directly involved in vascular aging (Foote et al., 2018). 2.3."  
-  -- Umm-e-Ammara Warraich (2020), p.4, [open_question] `W3029360938` doi:10.1016/j.heliyon.2020.e04107
 
-## Imaging & instrumentation frontiers  (7 statements)
+## Imaging & instrumentation frontiers  (10 statements)
 
 - "Conclusions and future perspectives The difficulty of measuring oxidative damage and the levels of particular ROS in vivo, together with the uncertainty of interpretation, mean that much is still unknown about the roles of ROS and oxidative damage in many fundamental biological processes."  
   -- Michael P. Murphy (2011), p.8, [open_question] `W1967236260` doi:10.1016/j.cmet.2011.03.010
@@ -194,11 +194,17 @@ Sentences extracted verbatim from the full-text corpus (with page provenance), r
   -- Mohammad T. Elnakish (2015), p.11, [open_question] `W2168869551` doi:10.1155/2015/854265
 - "Thus, complex I is recognized as the largest contributor to ROS production, although highly controversial [24,31–33], mainly because highly variable and difficult-to-measure factors influencing ROS production in vivo make it unachievable to evaluate ROS levels through isolated mitochondria [25]."  
   -- Danyao Chen (2025), p.4, [controversy] `W4410494645` doi:10.1016/j.redox.2025.103686
+- "Further research will be required to optimize other important parameters of the dioxetanes for in vivo imaging, particularly their biodistribution stability under physiological conditions."  
+  -- Nir Hananya (2019), p.8, [future_work] `W2948004964` doi:10.1021/acscentsci.9b00372
 - "It is clear that the identiﬁcation of the compounds responsible for this lipid peroxidation-associated chemiluminescence as well as the regulation of their concentration in vivo will be a major challenge in future studies of this signal in plants."  
   -- Michel Havaux (2022), p.15, [future_work] `W4283824773` doi:10.3390/antiox11071333
 - "This needs to be supported by future experiments with fast imaging of all these conditions."  
   -- David Fernández Rivas (2012), p.8, [future_work] `W2138158188` doi:10.1016/j.ultsonch.2012.04.008
+- "Future research should involve in vivo or in situ studies to validate these findings in more biologically relevant systems, explore a broader range of cell lines, increase the number of independent experiments, and confirm the frequency-specific effects on oxidative stress."  
+  -- Hakki Gurhan (2024), p.19, [future_work] `W4403406925` doi:10.3390/antiox13101237
 - "Future work should prioritize the analysis of fresh plant tissues, living cell cultures, or in vivo models to obtain physiologically relevant BE data. 5.5.3 Integrating cultivation into the quality control system Furthermore, the cultivation process of medicinal plants remains outside the quality control system, creating a critical loophole in the herbal supply chain."  
   -- Baorui Cao (2026), p.10, [future_work] `W7122655226` doi:10.3389/fchem.2025.1713717
+- "One important direction will involve the development of chem- iluminescence luminophores with direct emission at various wavelengths to allow multiplexing, which is not currently feasible with chemiluminescence.69 The limitations of ﬂuorescence for in vivo imaging result in large part from tissue autoﬂuorescence caused by external illumination."  
+  -- Nir Hananya (2019), p.8, [limitation] `W2948004964` doi:10.1021/acscentsci.9b00372
 
-_274 themed statements from 326 works._
+_310 themed statements from 364 works._

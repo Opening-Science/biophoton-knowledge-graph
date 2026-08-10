@@ -1,8 +1,8 @@
 # Major open research questions in the biophoton / UPE field
 
-**Derivation.** Mined from the full-text corpus (3,967 extracted works
-covering 58% of the field's open-access output, plus curated closed-access
-key papers): 4,481 sentences flagging open problems, controversies,
+**Derivation.** Mined from the full-text corpus (4,348 extracted works
+covering 63.5% of the field's open-access output, plus curated closed-access
+key papers): 4,916 sentences flagging open problems, controversies,
 measurement gaps and future-work directions, filtered to the UPE core and
 ROS wing and hand-synthesised into seven questions. Every claim below is
 anchored to verbatim quotes with work id, page and DOI in
@@ -208,6 +208,6 @@ compared in absolute terms. That is the book's thesis, now stated by the
 field's own literature in its own words — and the two metrology papers in
 `literature/curated/` are the imported solution path.
 
-*Sources: `open_question_statements.md` (274 ranked verbatim statements
+*Sources: `open_question_statements.md` (310 ranked verbatim statements
 with provenance); `literature/knowledgebase.sqlite` `statements` table
-(4,481 raw). Regenerate with `src/book_planning.py`.*
+(4,916 raw). Regenerate with `src/book_planning.py`.*

@@ -4,7 +4,7 @@ Everything the field map can reach as a file, in one folder. Built by `biophoton
 
 ## Open-access harvest
 
-- **3,966 of 6,842** open-access works retrieved (58%), 10.2 GB, in `papers/`.
+- **4,343 of 6,842** open-access works retrieved (63%), 11.3 GB, in `papers/`.
 - Filenames are `<year>_<FirstAuthor>_<OpenAlexID>.pdf`, so the folder sorts chronologically and every file joins back to `manifest.csv` and the field-map database on its work id.
 - The universe itself holds 18,355 works; the 11,513 that are not open access are listed in the map but cannot be fetched.
 
@@ -13,29 +13,29 @@ Everything the field map can reach as a file, in one folder. Built by `biophoton
 | 1890s | 1 |
 | 1910s | 1 |
 | 1920s | 9 |
-| 1930s | 8 |
+| 1930s | 10 |
 | 1940s | 3 |
-| 1950s | 9 |
-| 1960s | 18 |
-| 1970s | 29 |
-| 1980s | 43 |
-| 1990s | 147 |
-| 2000s | 516 |
-| 2010s | 1,683 |
-| 2020s | 1,498 |
+| 1950s | 10 |
+| 1960s | 20 |
+| 1970s | 36 |
+| 1980s | 54 |
+| 1990s | 164 |
+| 2000s | 573 |
+| 2010s | 1,823 |
+| 2020s | 1,638 |
 
-### Not retrieved (2,876)
+### Not retrieved (2,499)
 
 Flagged open access by OpenAlex, but no file could be pulled from an identified, rate-limited robot. Most are publishers that answer `403` to anything that is not a browser. No impersonation was attempted, so these stay as links: each row in `manifest.csv` carries the DOI and the reason, which is what an institutional login or an interlibrary request needs.
 
 | Reason | Works |
 | --- | ---: |
-| `landing-page` | 938 |
-| `http-403` | 711 |
-| `host-cooling-off` | 510 |
-| `http-404` | 453 |
-| `http-202` | 99 |
-| `error-ConnectError` | 46 |
+| `landing-page` | 908 |
+| `http-403` | 824 |
+| `host-cooling-off` | 230 |
+| `http-404` | 135 |
+| `http-500` | 125 |
+| `http-202` | 110 |
 
 ## Books
 
