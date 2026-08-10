@@ -43,13 +43,34 @@ Written up in [`field_state.md`](biophoton-fieldmap/outputs/field_state.md) (the
 book's chapter-0 scaffold) and
 [`field_boundary_report.md`](biophoton-fieldmap/outputs/field_boundary_report.md).
 
+## The literature corpus and knowledgebase
+
+On top of the map sits a full-text layer: every open-access PDF the map can
+reach, harvested politely (identified robot, per-host throttling, no
+impersonation), text-extracted, and joined back to the map in one queryable
+SQLite knowledgebase — **3,966 PDFs (58% of the field's OA output, 10.2 GB)**,
+4,481 mined sentences in which the field states its own open problems.
+The corpus itself is not redistributed; the tracked
+[`literature/manifest.csv`](literature/manifest.csv) carries DOI, source URL
+and sha256 for every work, so it is reconstructable and verifiable. Design,
+schema and rebuild runbook: [`docs/LITERATURE_CORPUS.md`](docs/LITERATURE_CORPUS.md).
+
+Headline synthesis:
+[`open_research_questions.md`](biophoton-fieldmap/outputs/book_planning/open_research_questions.md)
+— the field's seven major open questions in its own words, from mechanism
+(UV emission unexplained) to the metrology hole (no absolute units, no
+calibration chain, no inter-laboratory comparability) that the corpus shows
+sits upstream of the mechanism, coherence, signalling and brain-UPE disputes
+alike.
+
 ## Repository layout
 
 | Path | What it holds |
 |---|---|
 | `biophoton-fieldmap/src/` | The pipeline, one module per stage |
 | `biophoton-fieldmap/outputs/` | Reports, the interactive graph, the compact network JSON |
-| `docs/` | Data dictionary and changelog for the published dataset |
+| `literature/` | The literature corpus: tracked index + manifests; PDFs and databases are local-only, rebuildable |
+| `docs/` | Data dictionary, changelog, clustering strategy, literature-corpus documentation |
 | `OpenAlex_Field_Map_Spec_for_ClaudeCode.md` | The original build spec |
 | `cifra_seeds.csv` | The 263-entry seed table |
 

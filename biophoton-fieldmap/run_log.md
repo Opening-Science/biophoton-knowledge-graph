@@ -158,3 +158,34 @@ Wrote universe_ids.json (18561 works). OpenAlex requests this run: 620
 ## Stage H — synthesis
 
 - field_state.md + knowledge_map.html written
+
+## Stage I — literature harvest (2026-08-10)
+
+- OA works with resolvable URL: 6842 of 18355 (37% of universe)
+- PDFs retrieved: 3966 (58.0% of OA; initial pass 3527 + retry 439), 10.2 GB
+- not retrieved: 2876, all with per-work reason in literature/manifest.csv
+  (publisher 403 to identified robots ~25%, landing-page dead ends ~33%,
+  cooldown/timeouts ~18%, 404/410 ~20%)
+- policy: identified UA + per-host throttle + timed cooldown; no browser
+  impersonation
+- curated additions: 1 book (Volodyaev et al. 2023, 511 pp), 5 papers
+  (incl. closed-access Salari 2026 and 2 out-of-universe metrology papers)
+
+## Stage J — full-text extraction (2026-08-10)
+
+- extracted: 3972 texts, 0 errors; quality: 3805 ok, 139 references-heavy,
+  27 no-text-layer, 1 mostly-scanned
+- statements mined: 4481 (open_question / future_work / limitation /
+  controversy / measurement_gap), page-level provenance
+
+## Stage K — knowledgebase (2026-08-10)
+
+- works: 18355 (3967 with full text) x both clusterings x 39308 canonical
+  authors; FTS5 over title+abstract+body; chapter_map encoded
+
+## Stage L — book planning (2026-08-10)
+
+- statements in field scope: 2845; on-topic after UPE-vocab gate: 674;
+  themed: 274 across 7 themes
+- published: open_research_questions.md + open_question_statements.md
+- internal (gitignored): chapter_evidence.md, chapter_author_refinement.md

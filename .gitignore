@@ -35,5 +35,27 @@ biophoton-fieldmap/outputs/index/
 # Superseded duplicate of Biophoton_Field_Map_Report.html
 biophoton-fieldmap/outputs/field_map_report.html
 
+# --- literature corpus -------------------------------------------------------
+# Several GB of open-access PDFs plus hand-collected books and papers. The PDFs
+# are rebuildable (src/harvest_oa_pdfs.py, then src/consolidate_literature.py)
+# and some carry publisher licences that are fine to read but not to
+# redistribute, so only the index and manifests are tracked -- they carry every
+# work id, DOI, checksum and source URL needed to reconstruct the folder.
+literature/*
+!literature/INDEX.md
+!literature/manifest.csv
+!literature/curated.csv
+
+# Machine-local literature source roots + OSF-internal document list
+.literature_sources.json
+
+# --- book-planning internal documents ----------------------------------------
+# Candid per-person assessments used for interview planning stay local by
+# editorial decision; the published planning outputs are
+# open_research_questions.md and open_question_statements.md.
+biophoton-fieldmap/outputs/book_planning/chapter_author_refinement.md
+biophoton-fieldmap/outputs/book_planning/chapter_evidence.md
+
 # Local Claude Code settings
 .claude/settings.local.json
+.gstack/

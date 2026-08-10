@@ -23,6 +23,18 @@ python synthesize.py     # H: field_state.md + knowledge_map.html
 
 # rank.py must run after subdivide.py to get the consciousness_adjacent flag +
 # core_strand column; synthesize.py promotes the sub-strands into field_state.md.
+
+# --- literature corpus + knowledgebase (stages I-L, after A-H) --------------
+python harvest_oa_pdfs.py        # I: all OA PDFs -> ../literature/ (resumable)
+python consolidate_literature.py # I2: hand-collected material + corpus index
+python extract_fulltext.py       # J: text + open-problem statement mining
+python build_knowledgebase.py    # K: one joined, FTS5-searchable SQLite
+python book_planning.py          # L: evidence tables for the book synthesis
+
+# --- clustering v2 (optional re-clustering study) ---------------------------
+python coupling.py               # fractional-counting coupling graph
+python recluster.py              # CPM + stability across Leiden reruns
+python build_cluster_explorer.py # interactive cluster explorer HTML
 ```
 
 Every OpenAlex call is cached under `data/cache/` (keyed by entity id), so every
@@ -38,6 +50,10 @@ stage is idempotent and reruns are free. Requires a free OpenAlex API key in
 - `outputs/knowledge_map.html` — interactive researcher map (open in a browser).
 - `data/exports/researchers.csv` — ranked outreach table (+ core/open/rising views).
 - `data/exports/*.graphml` — four graphs for Gephi.
+- `../literature/` — the OA corpus (manifest + index tracked; 10 GB of PDFs
+  and the knowledgebase rebuild locally — see `../docs/LITERATURE_CORPUS.md`).
+- `outputs/book_planning/open_research_questions.md` — the field's open
+  questions, mined from full text with per-claim provenance.
 - `run_log.md` — every prune/cap/count. `MILESTONE2_DECISIONS.md` — locked decisions.
 - `NOTES_data_ethics.md` — contact-data handling (email column is INTERNAL).
 

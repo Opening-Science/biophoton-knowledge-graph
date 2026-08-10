@@ -39,3 +39,29 @@ outreach_score. Email columns are removed from this public release.
 0 Biophoton / UPE core; 3 ROS / redox / biochemiluminescence; 1 Sonochemistry /
 cavitation; 2 Bubble and fluid physics; 4 Sonoluminescence physics; 6
 Nanobubbles. Others are smaller adjacencies.
+
+## literature/manifest.csv (harvest outcome, one row per OA work)
+
+work_id, doi, title, year, type, cited_by_count, oa_status, community, hop,
+is_seed, status (ok/have/failed/pending), file (path under `literature/`),
+bytes, sha256, source_url, reason (per-host outcome trail for failures).
+
+## literature/curated.csv
+
+group (book/paper), file, title, authors, year, doi, bytes, corpus_relation
+(how the item relates to the mapped universe), note.
+
+## knowledgebase.sqlite (local build; see docs/LITERATURE_CORPUS.md)
+
+- **works** — universe metadata + `community` (coupling numbering),
+  `community_v2` + `stability` (CPM re-clustering, where built),
+  `core_strand`, `paper_rank_score`, abstract, `has_fulltext`,
+  `fulltext_file`, `fulltext_quality`, `n_pages`, `n_chars`, `lang_guess`.
+- **authors** — canonical authors + openness_score, institution, country,
+  first_year/last_year/n_works_universe (activity inside the universe).
+- **work_authors**(work_id, author_id, position, is_corresponding)
+- **statements**(work_id, file, page, kind, sentence) — kind is one of
+  open_question, future_work, limitation, controversy, measurement_gap.
+- **chapter_map**(chapter, anchor_kind, anchor_id) — draft book structure
+  as data.
+- **works_fts** — FTS5 (porter) over title, abstract, full body text.
