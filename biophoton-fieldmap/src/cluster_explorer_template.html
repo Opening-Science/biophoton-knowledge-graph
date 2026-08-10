@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Biophoton field map — cluster explorer</title>
+<style>
+:root{
+  --bg:#fbfaf8; --panel:#ffffff; --ink:#1b1a18; --muted:#6b675f; --faint:#9c968c;
+  --line:#e5e1d9; --line2:#efece5; --accent:#8c5a2b; --accent-soft:#f3ece2;
+  --seed:#2f6b4f; --seed-soft:#e6f0ea; --warn:#a33b2a; --warn-soft:#fbecea;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#16161a; --panel:#1d1e23; --ink:#e9e6e0; --muted:#a09a90; --faint:#726d65;
+    --line:#2e2f36; --line2:#26272d; --accent:#d69b62; --accent-soft:#2a231b;
+    --seed:#6dbf95; --seed-soft:#1c2b23; --warn:#e0836f; --warn-soft:#2e1e1a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans);
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.app{display:grid;grid-template-columns:290px 1fr;height:100vh}
+@media(max-width:880px){.app{grid-template-columns:1fr;height:auto}}
+
+/* ---------- left rail ---------- */
+.rail{border-right:1px solid var(--line);background:var(--panel);
+      display:flex;flex-direction:column;min-height:0}
+.rail header{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+.rail h1{font-size:15px;margin:0 0 3px;letter-spacing:-.01em}
+.rail .sub{font-size:11.5px;color:var(--faint)}
+.railsearch{padding:10px 12px;border-bottom:1px solid var(--line2)}
+.railsearch input{width:100%;padding:6px 9px;border:1px solid var(--line);
+  border-radius:6px;background:var(--bg);color:var(--ink);font:12.5px var(--sans)}
+.clist{overflow-y:auto;flex:1;padding:6px 8px 40px;min-height:0}
+@media(max-width:880px){.clist{max-height:320px}}
+.citem{display:block;width:100%;text-align:left;background:none;border:0;
+  padding:7px 9px;border-radius:7px;cursor:pointer;color:inherit;font:inherit;
+  border-left:3px solid transparent}
+.citem:hover{background:var(--line2)}
+.citem.on{background:var(--accent-soft);border-left-color:var(--accent)}
+.citem.sub{padding-left:20px}
+.citem .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.citem .id{font:600 12px var(--mono)}
+.citem .n{font:11px var(--mono);color:var(--faint)}
+.citem .lbl{font-size:11.5px;color:var(--muted);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.citem .bar{height:3px;border-radius:2px;background:var(--line);margin-top:5px;overflow:hidden}
+.citem .bar i{display:block;height:100%;background:var(--seed)}
+.grouphd{font:600 10.5px var(--sans);letter-spacing:.08em;text-transform:uppercase;
+  color:var(--faint);padding:14px 11px 5px}
+
+/* ---------- main ---------- */
+.main{overflow-y:auto;min-height:0}
+.wrap{max-width:1180px;padding:22px 26px 90px}
+@media(max-width:880px){.wrap{padding:18px 14px 60px}}
+h2{font-size:21px;margin:0 0 2px;letter-spacing:-.015em}
+.crumb{font:11.5px var(--mono);color:var(--faint);margin-bottom:14px}
+
+.stats{display:flex;flex-wrap:wrap;gap:22px;padding:13px 16px;border:1px solid var(--line);
+  border-radius:9px;background:var(--panel);margin-bottom:14px}
+.stat b{display:block;font:600 17px var(--mono);letter-spacing:-.02em}
+.stat span{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.chip{font:11.5px var(--mono);padding:2.5px 8px;border-radius:20px;
+  background:var(--accent-soft);color:var(--accent);border:1px solid transparent}
+.chip.plain{background:var(--line2);color:var(--muted)}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--warn);
+  background:var(--panel);border-radius:8px;padding:13px 15px;margin-bottom:18px;
+  font-size:13px;color:var(--muted)}
+.callout b{color:var(--ink)}
+
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:880px){.cols{grid-template-columns:1fr}}
+.col{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:12px 13px}
+.col h3{margin:0 0 2px;font-size:12.5px;letter-spacing:-.01em}
+.col .why{font-size:11px;color:var(--faint);margin-bottom:9px;line-height:1.4}
+.col ol{margin:0;padding-left:17px}
+.col li{font-size:12px;margin-bottom:6px;line-height:1.35}
+.col li em{font-style:normal;color:var(--faint);font:10.5px var(--mono);display:block}
+.col.bad{border-left:3px solid var(--warn)}
+.col.good{border-left:3px solid var(--seed)}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;
+  position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.ctrl input[type=search]{flex:1;min-width:180px;padding:6.5px 10px;border:1px solid var(--line);
+  border-radius:6px;background:var(--panel);color:var(--ink);font:13px var(--sans)}
+.ctrl select,.ctrl button{padding:6.5px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);color:var(--ink);font:12.5px var(--sans);cursor:pointer}
+.tog{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);
+  padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer}
+.tog input{margin:0}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;font:600 10.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--faint);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap;
+  cursor:pointer;user-select:none}
+th.num,td.num{text-align:right;font-family:var(--mono)}
+th:hover{color:var(--ink)}
+th .ar{opacity:.45;font-size:9px}
+td{padding:8px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--line2)}
+.ttl{font-weight:500;line-height:1.35}
+.meta{font:11px var(--mono);color:var(--faint);margin-top:2px}
+.badge{display:inline-block;font:600 9.5px var(--mono);padding:1px 5px;border-radius:4px;
+  vertical-align:1px;margin-right:5px;letter-spacing:.04em}
+.b-seed{background:var(--seed-soft);color:var(--seed)}
+.b-peri{background:var(--warn-soft);color:var(--warn)}
+.score{display:inline-block;min-width:34px}
+.sbar{display:block;height:3px;border-radius:2px;background:var(--line);margin-top:3px}
+.sbar i{display:block;height:100%;background:var(--accent);border-radius:2px}
+tr.det td{background:var(--panel);border-bottom:1px solid var(--line)}
+.detgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 20px;
+  font-size:12px}
+.detgrid dt{font:10.5px var(--sans);letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.detgrid dd{margin:1px 0 0;font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
+.more{margin:14px 0;padding:9px 14px;width:100%;border:1px dashed var(--line);
+  border-radius:7px;background:none;color:var(--muted);font:12.5px var(--sans);cursor:pointer}
+.more:hover{color:var(--ink);border-color:var(--accent)}
+.empty{padding:34px;text-align:center;color:var(--faint);font-size:13px}
+details.method{margin-bottom:18px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel);padding:11px 15px}
+details.method summary{cursor:pointer;font-size:12.5px;font-weight:600}
+details.method dl{margin:11px 0 2px;display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:12.5px}
+details.method dt{font-family:var(--mono);color:var(--accent)}
+details.method dd{margin:0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail">
+    <header>
+      <h1>Cluster explorer</h1>
+      <div class="sub" id="railsub"></div>
+    </header>
+    <div class="railsearch"><input id="clfilter" placeholder="filter clusters…"></div>
+    <div class="clist" id="clist"></div>
+  </nav>
+  <main class="main"><div class="wrap" id="wrap"></div></main>
+</div>
+
+<script>
+const DATA = /*__PAYLOAD__*/null;
+
+/* column layout of DATA.works rows */
+const F = {id:0,title:1,year:2,cites:3,seed:4,hop:5,deg:6,strength:7,intraDeg:8,
+           intraStr:9,cohesion:10,seedCoup:11,nSeeds:12,topicFit:13,coreC:14,
+           coreS:15,cluster:16,sub:17,doi:18,oa:19,authors:20,topics:21,
+           coreV:22,v2:23,stab:24};
+const CN = DATA.clusterNames, AN = DATA.authorNames, TN = DATA.topicNames;
+const CLUSTERS = new Map(DATA.clusters.map(c => [c.id, c]));
+const byId = new Map();
+const push = (k, w) => { if (!byId.has(k)) byId.set(k, []); byId.get(k).push(w); };
+for (const w of DATA.works) {
+  push(CN[w[F.cluster]], w);
+  if (w[F.sub] >= 0) push(CN[w[F.sub]], w);
+  if (w[F.v2] >= 0) push(CN[w[F.v2]], w);
+}
+const PERI = DATA.meta.periphery_deg;
+const num = n => n.toLocaleString('en-US');
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- state ---------------- */
+const state = {cluster:'c0', sort:'coreScore', dir:-1, q:'', seedOnly:false,
+               hideP:false, hop:'', limit:150, open:new Set()};
+
+/* every cluster carries a core score computed against its own partition */
+const scoreField = id => {
+  const c = CLUSTERS.get(id);
+  if (!c) return F.coreC;
+  if (c.partition === 'v2') return F.coreV;
+  return c.level === 1 ? F.coreS : F.coreC;
+};
+const coreOf = (w, id) => { const v = w[scoreField(id)]; return v >= 0 ? v : 0; };
+const worksOf = id => byId.get(id) || [];
+
+const SORTS = {
+  coreScore:{label:'Core score', get:(w,id)=>coreOf(w,id)},
+  intraStr :{label:'Intra-cluster coupling', get:w=>w[F.intraStr]},
+  seedCoup :{label:'Seed anchoring', get:w=>w[F.seedCoup]},
+  cites    :{label:'Citations (raw)', get:w=>w[F.cites]},
+  cohesion :{label:'Cohesion', get:w=>w[F.cohesion]},
+  stab     :{label:'Consensus stability', get:w=>w[F.stab]},
+  year     :{label:'Year', get:w=>w[F.year]},
+  deg      :{label:'Coupling degree', get:w=>w[F.deg]},
+};
+
+/* ---------------- left rail ---------------- */
+function labelOf(c){ return c.terms.slice(0,3).join(' · ') || c.topics[0] || '—'; }
+
+function renderRail(){
+  const f = state.q2 || '';
+  const match = c => !f || c.id.includes(f) || labelOf(c).toLowerCase().includes(f)
+                  || c.topics.join(' ').toLowerCase().includes(f)
+                  || c.authors.join(' ').toLowerCase().includes(f);
+  const v1 = DATA.clusters.filter(c => c.partition !== 'v2' && c.level === 0
+                                    && c.id !== 'unassigned')
+                          .sort((a,b) => b.n - a.n);
+  const v2 = DATA.clusters.filter(c => c.partition === 'v2' && c.id !== 'v.small')
+                          .sort((a,b) => b.n - a.n);
+  const small = CLUSTERS.get('v.small');
+  const un = CLUSTERS.get('unassigned');
+
+  let h = '<div class="grouphd">v1 · full counting + modularity</div>';
+  for (const c of v1){
+    const subs = DATA.clusters.filter(s => s.parent === c.id).sort((a,b)=>b.n-a.n);
+    const kids = subs.filter(match);
+    if (!match(c) && !kids.length) continue;
+    h += item(c);
+    for (const s of (f ? kids : subs)) h += item(s, true);
+  }
+  if (v2.length){
+    h += `<div class="grouphd">v2 · fractional counting + CPM</div>`;
+    for (const c of v2.filter(match)) h += item(c);
+    if (small && match(small)) h += item(small);
+  }
+  if (un && match(un)) h += '<div class="grouphd">Outside the graph</div>' + item(un);
+  document.getElementById('clist').innerHTML = h;
+  for (const el of document.querySelectorAll('.citem'))
+    el.onclick = () => { state.cluster = el.dataset.id; state.limit = 150;
+                         state.open.clear(); renderRail(); renderMain();
+                         document.querySelector('.main').scrollTop = 0; };
+}
+function item(c, sub){
+  const seedPct = c.n ? Math.min(100, c.seeds / c.n * 100 * 8) : 0;
+  return `<button class="citem${sub?' sub':''}${c.id===state.cluster?' on':''}" data-id="${c.id}">
+    <span class="top"><span class="id">${c.id}</span>
+      <span class="n">${num(c.n)}${c.seeds?` · ${c.seeds}s`:''}</span></span>
+    <span class="lbl">${esc(labelOf(c))}</span>
+    <span class="bar"><i style="width:${seedPct}%"></i></span></button>`;
+}
+
+/* ---------------- main ---------------- */
+function renderMain(){
+  const id = state.cluster, c = CLUSTERS.get(id), all = worksOf(id);
+  const hops = Object.entries(c.hops).sort().map(([k,v])=>`hop ${k}: ${num(v)}`).join(' · ');
+  const parent = c.parent ? `${c.parent} › ` : '';
+  const partLabel = c.partition === 'v2'
+    ? 'v2 · fractional counting + CPM' : 'v1 · full counting + modularity';
+
+  let h = `<h2>${esc(id)} — ${esc(labelOf(c))}</h2>
+  <div class="crumb">${partLabel} · ${parent}${num(c.n)} works · ${hops || 'no hop data'} · ${DATA.meta.snapshot}</div>
+  <div class="stats">
+    <div class="stat"><b>${num(c.n)}</b><span>works</span></div>
+    <div class="stat"><b>${num(c.seeds)}</b><span>seeds</span></div>
+    <div class="stat"><b>${c.medyear ?? '—'}</b><span>median year</span></div>
+    <div class="stat"><b>${num(c.med_deg)}</b><span>median degree</span></div>
+    <div class="stat"><b>${num(c.med_cites)}</b><span>median cites</span></div>
+    <div class="stat"><b>${num(c.periphery)}</b><span>periphery (deg ≤ ${PERI})</span></div>
+    ${c.partition === 'v2' && c.stability != null ? `<div class="stat"><b>${c.stability.toFixed(2)}</b><span>consensus stability</span></div>` : ''}
+  </div>
+  <div class="chips">${c.terms.map(t=>`<span class="chip">${esc(t)}</span>`).join('')}
+    ${c.topics.slice(0,4).map(t=>`<span class="chip plain">${esc(t)}</span>`).join('')}</div>`;
+
+  h += rankPanels(id, all);
+  h += methodBlock();
+  h += controls();
+  h += `<div id="tblhost"></div>`;
+  document.getElementById('wrap').innerHTML = h;
+  wireControls();
+  renderTable();
+}
+
+function topBy(all, id, key, n){
+  const g = SORTS[key].get;
+  return [...all].sort((a,b) => g(b,id) - g(a,id)).slice(0,n);
+}
+function li(w, id, note){
+  return `<li>${esc(w[F.title] || '(untitled)')} <em>${note(w)}</em></li>`;
+}
+function rankPanels(id, all){
+  const magnets = topBy(all, id, 'cites', 5);
+  const anchored = topBy(all, id, 'seedCoup', 5);
+  const core = topBy(all, id, 'coreScore', 5);
+  const gapNote = w => `${num(w[F.cites])} cites · degree ${num(w[F.deg])} · core ${coreOf(w,id).toFixed(1)}`;
+  return `<div class="cols">
+    <div class="col bad"><h3>Ranked by raw citations</h3>
+      <div class="why">What the Milestone-2 report used. Global standing, not membership — inside this partition it is <em>anti</em>-correlated with coupling degree.</div>
+      <ol>${magnets.map(w=>li(w,id,gapNote)).join('')}</ol></div>
+    <div class="col good"><h3>Ranked by seed anchoring</h3>
+      <div class="why">Shared references with the seed set. Answers “is this work in the same conversation as the seeds?”</div>
+      <ol>${anchored.map(w=>li(w,id,w2=>`${num(w2[F.seedCoup])} shared refs · ${num(w2[F.nSeeds])} seeds · ${num(w2[F.cites])} cites`)).join('')}</ol></div>
+    <div class="col good"><h3>Ranked by core score</h3>
+      <div class="why">Blend of intra-cluster coupling (${DATA.meta.weights.structure}), seed anchoring (${DATA.meta.weights.anchor}) and topical fit (${DATA.meta.weights.topic}), as within-cluster percentiles.</div>
+      <ol>${core.map(w=>li(w,id,w2=>`core ${coreOf(w2,id).toFixed(1)} · intra ${num(w2[F.intraStr])} · ${num(w2[F.cites])} cites`)).join('')}</ol></div>
+  </div>`;
+}
+
+function methodBlock(){
+  const v = DATA.meta.v2;
+  return `<details class="method"><summary>What the columns mean</summary>
+  <dl>
+    <dt>degree</dt><dd>Coupling neighbours: works sharing ≥2 references with this one. Degree ≤ ${PERI} marks graph <b>periphery</b> — a work Leiden had to place somewhere, not one the cluster is built from.</dd>
+    <dt>intra</dt><dd>Summed coupling weight landing inside this same cluster. The structural weight the work carries here.</dd>
+    <dt>cohesion</dt><dd>intra ÷ total coupling strength. Below ~0.5 the work belongs more to its neighbours than to this cluster.</dd>
+    <dt>seed↔</dt><dd>Shared references with the seed set, summed over seeds. Field anchoring, independent of how famous the work is.</dd>
+    <dt>fit</dt><dd>Share of the work's OpenAlex topics that are among the cluster's ten commonest.</dd>
+    <dt>stab.</dt><dd>Consensus stability over ${v ? v.params.runs : 10} Leiden runs with different random seeds: the share of the work's v2 cluster that stays with it. Low values mark works whose placement is a coin toss. Defined on the v2 partition only.</dd>
+    <dt>core</dt><dd>0–100 blend of intra, seed↔ and fit as within-cluster percentiles, so clusters of different size stay comparable.</dd>
+  </dl>
+  <dl>
+    <dt>v1</dt><dd>The shipped partition: full counting of shared references, weight ≥ 2, modularity (RBConfiguration) at resolution 1.0 — <code>networks.py</code>.</dd>
+    <dt>v2</dt><dd>Fractional counting of coupling links (Perianes-Rodríguez, Waltman &amp; van Eck 2016) and the resolution-limit-free Constant Potts Model (Traag et al. 2011, 2019)${v ? ` at resolution ${v.params.resolution}` : ''} — <code>recluster.py</code>.${v ? ` ${v.clusters} clusters, ARI ${v.ari_mean.toFixed(3)} ± ${v.ari_std.toFixed(3)} across reruns.` : ''} v2 clusters below ${DATA.meta.min_v2_size} works are pooled as <code>v.small</code>.</dd>
+  </dl></details>`;
+}
+
+function controls(){
+  const opts = Object.entries(SORTS).map(([k,v]) =>
+    `<option value="${k}"${k===state.sort?' selected':''}>${v.label}</option>`).join('');
+  return `<div class="ctrl">
+    <input type="search" id="q" placeholder="search title, author, topic…" value="${esc(state.q)}">
+    <select id="sort">${opts}</select>
+    <label class="tog"><input type="checkbox" id="seedOnly"${state.seedOnly?' checked':''}>seeds only</label>
+    <label class="tog"><input type="checkbox" id="hideP"${state.hideP?' checked':''}>hide periphery</label>
+    <select id="hop">
+      <option value="">all hops</option>
+      <option value="0"${state.hop==='0'?' selected':''}>hop 0 (seeds)</option>
+      <option value="1"${state.hop==='1'?' selected':''}>hop 1</option>
+      <option value="2"${state.hop==='2'?' selected':''}>hop 2</option>
+    </select>
+    <button id="csv">Export view (CSV)</button>
+  </div>`;
+}
+function wireControls(){
+  const on = (sel, ev, fn) => { const e = document.getElementById(sel); if (e) e[ev] = fn; };
+  on('q','oninput', e => { state.q = e.target.value.toLowerCase(); state.limit = 150; renderTable(); });
+  on('sort','onchange', e => { state.sort = e.target.value; state.dir = -1; renderTable(); });
+  on('seedOnly','onchange', e => { state.seedOnly = e.target.checked; renderTable(); });
+  on('hideP','onchange', e => { state.hideP = e.target.checked; renderTable(); });
+  on('hop','onchange', e => { state.hop = e.target.value; renderTable(); });
+  on('csv','onclick', exportCsv);
+  const f = document.getElementById('clfilter');
+  f.oninput = e => { state.q2 = e.target.value.toLowerCase(); renderRail(); };
+}
+
+function filtered(){
+  const id = state.cluster;
+  let rows = worksOf(id);
+  if (state.seedOnly) rows = rows.filter(w => w[F.seed]);
+  if (state.hideP) rows = rows.filter(w => w[F.deg] > PERI);
+  if (state.hop !== '') rows = rows.filter(w => String(w[F.hop]) === state.hop);
+  if (state.q){
+    const q = state.q;
+    rows = rows.filter(w =>
+      (w[F.title]||'').toLowerCase().includes(q) ||
+      w[F.authors].some(a => AN[a].toLowerCase().includes(q)) ||
+      w[F.topics].some(t => TN[t].toLowerCase().includes(q)));
+  }
+  const g = SORTS[state.sort].get;
+  return rows.sort((a,b) => (g(b,id) - g(a,id)) * (state.dir < 0 ? 1 : -1));
+}
+
+const COLS = [
+  ['title','Work',''], ['year','Year','num'], ['cites','Cites','num'],
+  ['deg','Deg','num'], ['intraStr','Intra','num'], ['cohesion','Coh.','num'],
+  ['seedCoup','Seed↔','num'], ['topicFit','Fit','num'], ['stab','Stab.','num'],
+  ['coreScore','Core','num'],
+];
+function renderTable(){
+  const id = state.cluster, rows = filtered(), shown = rows.slice(0, state.limit);
+  const host = document.getElementById('tblhost');
+  if (!rows.length){ host.innerHTML = `<div class="empty">No works match these filters.</div>`; return; }
+  let h = `<table><thead><tr>` + COLS.map(([k,l,cls]) => {
+      const active = state.sort === k;
+      return `<th class="${cls}" data-k="${k}">${l}${active?` <span class="ar">${state.dir<0?'▼':'▲'}</span>`:''}</th>`;
+    }).join('') + `</tr></thead><tbody>`;
+  for (const w of shown) h += rowHtml(w, id);
+  h += `</tbody></table>`;
+  if (rows.length > state.limit)
+    h += `<button class="more" id="more">Show more — ${num(shown.length)} of ${num(rows.length)} shown</button>`;
+  else h += `<div class="empty">${num(rows.length)} works · all shown</div>`;
+  host.innerHTML = h;
+
+  for (const th of host.querySelectorAll('th')) th.onclick = () => {
+    const k = th.dataset.k;
+    if (!SORTS[k]) return;
+    if (state.sort === k) state.dir *= -1; else { state.sort = k; state.dir = -1; }
+    const sel = document.getElementById('sort'); if (sel) sel.value = state.sort;
+    renderTable();
+  };
+  for (const tr of host.querySelectorAll('tr.row')) tr.onclick = () => {
+    const wid = tr.dataset.w;
+    state.open.has(wid) ? state.open.delete(wid) : state.open.add(wid);
+    renderTable();
+  };
+  const m = document.getElementById('more');
+  if (m) m.onclick = () => { state.limit += 300; renderTable(); };
+}
+
+function rowHtml(w, id){
+  const core = coreOf(w, id);
+  const peri = w[F.deg] <= PERI;
+  const badges = (w[F.seed] ? `<span class="badge b-seed">SEED</span>` : '')
+               + (peri ? `<span class="badge b-peri">PERIPHERY</span>` : '');
+  const au = w[F.authors].map(a => AN[a]).join(', ');
+  let h = `<tr class="row" data-w="${w[F.id]}">
+    <td><div class="ttl">${badges}${esc(w[F.title] || '(untitled)')}</div>
+        <div class="meta">${esc(au) || '—'}</div></td>
+    <td class="num">${w[F.year] || '—'}</td>
+    <td class="num">${num(w[F.cites])}</td>
+    <td class="num">${num(w[F.deg])}</td>
+    <td class="num">${num(w[F.intraStr])}</td>
+    <td class="num">${w[F.cohesion].toFixed(2)}</td>
+    <td class="num">${num(w[F.seedCoup])}</td>
+    <td class="num">${w[F.topicFit].toFixed(2)}</td>
+    <td class="num">${w[F.stab] < 0 ? '—' : w[F.stab].toFixed(2)}</td>
+    <td class="num"><span class="score">${core.toFixed(1)}</span>
+        <span class="sbar"><i style="width:${core}%"></i></span></td></tr>`;
+  if (state.open.has(String(w[F.id]))){
+    const doi = w[F.doi] ? `<a href="https://doi.org/${esc(w[F.doi])}" target="_blank" rel="noopener">${esc(w[F.doi])}</a>` : '—';
+    h += `<tr class="det"><td colspan="${COLS.length}"><dl class="detgrid">
+      <div><dt>OpenAlex</dt><dd><a href="https://openalex.org/W${w[F.id]}" target="_blank" rel="noopener">W${w[F.id]}</a></dd></div>
+      <div><dt>DOI</dt><dd>${doi}</dd></div>
+      <div><dt>Open access</dt><dd>${w[F.oa] ? 'yes' : 'no'}</dd></div>
+      <div><dt>Hop</dt><dd>${w[F.hop] < 0 ? '—' : w[F.hop]}</dd></div>
+      <div><dt>Coupling</dt><dd>${num(w[F.deg])} neighbours · ${num(w[F.strength])} total weight</dd></div>
+      <div><dt>Intra / total</dt><dd>${num(w[F.intraDeg])} of ${num(w[F.deg])} neighbours in cluster</dd></div>
+      <div><dt>Seed anchoring</dt><dd>${num(w[F.seedCoup])} refs shared with the seed set · ${num(w[F.nSeeds])} same-community seeds coupled</dd></div>
+      <div><dt>v1 / v2 cluster</dt><dd>${esc(CN[w[F.cluster]])}${w[F.sub]>=0?` · ${esc(CN[w[F.sub]])}`:''} / ${w[F.v2]>=0?esc(CN[w[F.v2]]):'—'}</dd></div>
+      <div><dt>Consensus stability</dt><dd>${w[F.stab] < 0 ? '—' : w[F.stab].toFixed(3)}</dd></div>
+      <div style="grid-column:1/-1"><dt>Topics</dt><dd>${w[F.topics].map(t=>esc(TN[t])).join(' · ') || '—'}</dd></div>
+      <div style="grid-column:1/-1"><dt>Authors</dt><dd>${esc(w[F.authors].map(a=>AN[a]).join(' · ')) || '—'}</dd></div>
+    </dl></td></tr>`;
+  }
+  return h;
+}
+
+function exportCsv(){
+  const id = state.cluster, rows = filtered();
+  const head = ['work_id','title','year','cited_by_count','is_seed','hop','degree',
+                'intra_strength','cohesion','seed_coupling','n_seeds_coupled',
+                'topic_fit','stability','core_score','cluster_v1','subcluster_v1',
+                'cluster_v2','doi'];
+  const q = v => `"${String(v ?? '').replace(/"/g,'""')}"`;
+  const body = rows.map(w => [
+    'W'+w[F.id], w[F.title], w[F.year] || '', w[F.cites], w[F.seed], w[F.hop],
+    w[F.deg], w[F.intraStr], w[F.cohesion], w[F.seedCoup], w[F.nSeeds],
+    w[F.topicFit], w[F.stab] < 0 ? '' : w[F.stab],
+    coreOf(w,id).toFixed(1), CN[w[F.cluster]],
+    w[F.sub] >= 0 ? CN[w[F.sub]] : '', w[F.v2] >= 0 ? CN[w[F.v2]] : '',
+    w[F.doi]].map(q).join(',')).join('\n');
+  const blob = new Blob([head.join(',')+'\n'+body], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${id}_works.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---------------- boot ---------------- */
+document.getElementById('railsub').textContent =
+  `${num(DATA.meta.n_works)} works · ${num(DATA.meta.n_in_graph)} in coupling graph · ${num(DATA.meta.n_seeds)} seeds`;
+renderRail();
+renderMain();
+</script>
+</body>
+</html>
