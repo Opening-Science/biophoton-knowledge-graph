@@ -45,6 +45,7 @@ literature/*
 !literature/INDEX.md
 !literature/manifest.csv
 !literature/curated.csv
+!literature/zotero_library.csv
 
 # Machine-local literature source roots + OSF-internal document list
 .literature_sources.json

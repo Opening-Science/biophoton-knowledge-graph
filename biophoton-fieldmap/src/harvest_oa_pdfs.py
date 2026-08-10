@@ -73,6 +73,9 @@ HOST_INTERVAL = {
     "www.ncbi.nlm.nih.gov": 2.0,
     "pmc.ncbi.nlm.nih.gov": 2.0,
     "api.unpaywall.org": 0.2,
+    "api.semanticscholar.org": 1.2,  # unauthenticated shared pool: ~1 rps
+    "archive.org": 1.5,
+    "web.archive.org": 1.5,
     # doi.org is a global redirect service and europepmc showed no throttling
     # under a burst; both are hit by a large share of works, so a long interval
     # here serialises the whole run behind them.
@@ -508,6 +511,55 @@ def mine_html(html: str, base_url: str) -> list[str]:
     return out
 
 
+def s2_pdf(client: httpx.Client, doi: str) -> str | None:
+    """Semantic Scholar's openAccessPdf -- an aggregator that carries OA
+    copies under publisher agreements, so it legitimately resolves works
+    whose own landing pages dead-end. Cached; unauthenticated tier."""
+    doi = (doi or "").strip().lower()
+    if not doi.startswith("10."):
+        return None
+    cache = C.CACHE / "s2"
+    cache.mkdir(parents=True, exist_ok=True)
+    cp = cache / (hashlib.sha1(doi.encode()).hexdigest() + ".json")
+    if cp.exists():
+        try:
+            data = json.loads(cp.read_text())
+        except Exception:
+            data = {}
+    else:
+        throttle("api.semanticscholar.org")
+        try:
+            r = client.get(
+                f"https://api.semanticscholar.org/graph/v1/paper/DOI:"
+                f"{quote(doi)}", params={"fields": "openAccessPdf"},
+                timeout=30.0)
+            data = r.json() if r.status_code == 200 else {}
+        except Exception:
+            data = {}
+        cp.write_text(json.dumps(data))
+    u = ((data or {}).get("openAccessPdf") or {}).get("url")
+    return u if u and u.startswith("http") else None
+
+
+def wayback_pdf(client: httpx.Client, url: str) -> str | None:
+    """Internet Archive snapshot for a dead link (404/410 bucket)."""
+    if not url or not url.startswith("http"):
+        return None
+    throttle("archive.org")
+    try:
+        r = client.get("https://archive.org/wayback/available",
+                       params={"url": url}, timeout=30.0)
+        snap = (((r.json() or {}).get("archived_snapshots") or {})
+                .get("closest") or {})
+        u = snap.get("url")
+        if u and snap.get("available"):
+            # id_ variant serves the original bytes without the toolbar
+            return re.sub(r"(/web/\d+)/", r"\1id_/", u.replace("http://", "https://", 1))
+    except Exception:
+        pass
+    return None
+
+
 def pmc_urls(queue: list[str], w: dict | None) -> list[str]:
     """Europe PMC render URLs for any PMCID mentioned anywhere in this work."""
     blobs = list(queue)
@@ -559,12 +611,15 @@ def handle(rec, client: httpx.Client, done: dict) -> dict:
     queue = candidates(rec, w)
     if (u := unpaywall_pdf(client, doi)) and u not in queue:
         queue.append(u)
+    if (u := s2_pdf(client, doi)) and u not in queue:
+        queue.append(u)
 
     # PMC full text is fetched from Europe PMC, ahead of everything else: it
     # is a clean direct PDF where the publisher copy is often walled.
     queue[:0] = [u for u in pmc_urls(queue, w) if u not in queue]
 
     seen: set[str] = set()
+    dead_urls: list[str] = []      # direct candidates that 404/410ed
     html_scans = 0
     attempts = 0
     while queue and attempts < MAX_ATTEMPTS_PER_WORK:
@@ -578,6 +633,8 @@ def handle(rec, client: httpx.Client, done: dict) -> dict:
         attempts += 1
         res = fetch(client, url)
         tried.append(f"{host}:{res.reason}")
+        if res.reason in ("http-404", "http-410"):
+            dead_urls.append(url)
         if res.kind == "pdf":
             return save(res.data, url, "ok")
         if res.kind == "html" and html_scans < MAX_HTML_SCANS_PER_WORK:
@@ -588,6 +645,15 @@ def handle(rec, client: httpx.Client, done: dict) -> dict:
                      if u not in seen]
             found += [u for u in rewrite(res.final_url) if u not in seen]
             queue[:0] = found[:3]
+
+    # last resort for dead links: the Internet Archive's copy of the first
+    # direct-PDF candidates that 404ed on the live web
+    for orig in dead_urls[:2]:
+        if (au := wayback_pdf(client, orig)):
+            res = fetch(client, au)
+            tried.append(f"wayback:{res.reason}")
+            if res.kind == "pdf":
+                return save(res.data, au, "wayback")
 
     return {"work_id": wid, "status": "failed", "file": "", "bytes": 0,
             "url": (candidates(rec, w) or [""])[0],
