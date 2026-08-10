@@ -47,6 +47,7 @@ literature/*
 !literature/curated.csv
 !literature/zotero_library.csv
 !literature/zotero_watch.csv
+!literature/zotero_closed_access.md
 !literature/ZOTERO_WATCH.md
 
 # Machine-local literature source roots + OSF-internal document list
